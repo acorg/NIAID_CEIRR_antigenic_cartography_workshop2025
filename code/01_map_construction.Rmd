@@ -1,0 +1,503 @@
+---
+title: "01 Map Construction"
+author: "Antonia Netzl"
+date: "2025-06-05"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+rm(list = ls()) # clear environment at the beginning of each session
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.width=8, fig.height=6,
+                      fig.align = "center")
+```
+
+This markdown contains the basic code to construct antigenic maps from titer tables. 
+
+Working code is provided for each section. We also encourage you to try and write your own code to perform each task before runnning the provided code.
+
+### Load the required packages
+
+We will be using the [`ggplot2`])(https://ggplot2.tidyverse.org) package for plotting the titer data, the [`dplyr`](https://dplyr.tidyverse.org) and ['tidyverse'](https://www.tidyverse.org) packages for handling the data, and the [`Racmacs`](https://acorg.github.io/Racmacs/index.html) package for constructing and examining antigenic maps.
+
+We will use [`knitr`](https://yihui.org/knitr/) for table formatting.
+
+Write your own code:
+
+```{r}
+
+
+```
+
+Or run the provided code:
+
+```{r load_packages}
+# Package names
+packages <- c("Racmacs","ggplot2", "dplyr", "knitr", "tidyverse")
+
+# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+
+invisible(lapply(packages, library, character.only = TRUE))
+
+#set ggplot2 theme
+theme_set(theme_bw() + 
+            theme(strip.background.x = element_blank()))
+```
+
+### Load the titer data
+
+We will be working with artifical titer data. 
+
+Load the data from `data/01_titerdata.csv`:
+
+```{r}
+
+```
+
+or run the provided code:
+
+```{r load_data}
+titerdata <- read.csv("../data/01_titerdata.csv", row.names = "X")
+```
+
+Let's look at the format of the titer data:
+
+```{r}
+kable(titerdata)
+```
+
+The required input format to construct and antigenic map from titerdata is N(Antigens) x N(Sera), with a single row per antigen and a single column per serum. In each cell(antigen, serum) is the specific titer measurement. 
+
+**Therefore, when reading in the data, make sure to select the antigen column as rowname.**
+
+## Visualising the titer data
+
+Antigenic assays are performed by serial dilutions of each serum, incubated with the same amount of virus. To reflect each titer as a single step in the dilution assay, we can apply a log2 transformation to each titer. A single unit difference then represents one dilutionstep (+1 = titer x 2; -1 = titer x 0.5).
+
+Antigenic distances are fold changes from the maximum titer antigen in one serum $s$ to the other antigens $i$ in the same serum. As one Log2 Unit 
+corresponds to one fold change, we can calculate target antigenic distances the following way, applying a 1/10 transformation to each serum to center serum on their maximum titer antigen:
+
+$$D_{i,s} = max(log_2(titer_{s}/10)) - log_2(titer_{i,s}/10)$$
+
+Which is the same as applying a log2 transformation to the linear fold changes:
+
+$$D_{i,s} = log_2(max(titer_{s})/titer_{i,s})$$
+
+By transforming the data in this way, we obtain a dissimilarity matrix: Higher values correspond to larger titer differences. The so obtained 
+target distances are then used to optimize serum and antigen coordinates in Euclidean space, such that the Euclidean distance between each pair best 
+represents the log2 titer fold change. The error between the target distance $D_t$ and map distance $d_m$ is reported as map stress:
+
+$$stress = (D_t - d_m)^2$$
+
+The antigenic map algorithm does this transformation of raw titers to Euclidean map distances automatically. **We still urge people to inspect their data before constructing an antigenic map, and think about the positions they expect for each serum and antigen pair**.
+
+So, let's visualise the log2 titers and fold changes to each antigen below.
+
+Please enter your own code:
+
+```{r}
+
+
+```
+
+
+Or run the provided code:
+```{r}
+log2_data <- log2(titerdata/10) %>%
+  mutate(Antigen = rownames(.)) %>%
+  pivot_longer(cols = colnames(titerdata), names_to = "Serum", values_to = "logtiter") %>%
+  group_by(Serum) %>%
+  mutate(fc = max(logtiter)-logtiter)
+
+log2_data %>%
+  ggplot(aes(x = Antigen, y = logtiter, color = Serum, group = Serum)) + 
+  geom_line() + 
+  geom_point() + 
+  geom_text(aes(label = fc), y = 4.5) +
+  facet_wrap(~Serum) + 
+  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 1), fill = "grey60", color = NA, alpha = 0.1) +
+  ylim(c(0, 5))
+```
+
+The target antigenic distance for each serum and antigen pair is written at the top. In this case with simulated data they match perfectly across sera and variants. The grey area indicates the detection limit of 20 (log2(20/10) = 1). 
+
+
+## Making an antigenic map
+
+The antigenic map algorithm does transforms raw data into a dissimilarity matrix and performs multidimensional scaling to preserve the relationships within the data to position the points in a lower dimension.
+
+The required input format to construct and antigenic map from titer data is N(Antigens) x N(Sera), with a single row per antigen and a single column per serum. In each cell(antigen, serum) is the specific titer measurement without Log2 transformation.
+
+Please try and construct a 2D antigenic map with the `Racmacs make.acmap()` function and the `titerdata` object in the correct format. Let's also plot the map and display the map stress and antigen labels, you can find information 
+on the functions on the [Racmacs reference page](https://acorg.github.io/Racmacs/reference/index.html):
+
+```{r}
+
+```
+
+Or run the provided code:
+
+```{r}
+map <- make.acmap(titerdata,
+                  ag_names = rownames(titerdata),
+                  sr_names = colnames(titerdata),
+                  number_of_dimensions = 2,
+                  number_of_optimizations = 100)
+plot(map, plot_stress = TRUE,
+     plot_labels = "antigens",
+     label.offset = c(0.5))
+```
+
+
+We see that the map stress is 0, so Euclidean map distance and target titer distance match perfectly. The sera (open squares) are at the exact same location as their highest titer antigens (colored spheres). We can change the order of points and plot sera on top of their antigens:
+
+```{r}
+
+```
+
+Provided code:
+
+```{r}
+srSize(map) <- 4
+ptDrawingOrder(map) <- rev(ptDrawingOrder(map))
+plot(map, plot_stress = TRUE,
+     plot_labels = "sera",
+     label.offset = c(0.5))
+```
+
+Alternatively, we can change the size of the sera:
+
+```{r}
+
+```
+
+Provided code:
+
+
+```{r}
+srSize(map) <- 8
+plot(map, plot_stress = TRUE,
+     plot_labels = "sera",
+     label.offset = c(0.5))
+```
+When we compare serum and antigen distances in the map, we see that the perfectly match the titer distances:
+
+```{r}
+round(mapDistances(map),2)
+```
+
+## Map styling
+
+We can change the color of antigens and sera, their size and their opacity with the following functions: `agFill(), agOutline(), agOutlineWidth(), agSize(), srFill(), srOutline(), srOutlineWidth(), srSize()`. The opacity 
+can be adjusted with the `adjustcolor()` function.
+
+
+The order per field corresponds to the order of the `agNames(map)` and `srNames(map)` fields, so if we want to color the B antigen and serum blue, we have to match the field to the correct name:
+
+```{r}
+
+```
+
+
+```{r}
+srOutlineWidth(map) <- 2
+srOutline(map) <- adjustcolor(srOutline(map), alpha.f = 0.7)
+agFill(map) <- adjustcolor(agFill(map), alpha.f = 0.8)
+
+agFill(map)[grepl("_B", agNames(map))] <- "blue"
+srOutline(map)[grepl("_B", agNames(map))] <- "blue"
+
+plot(map)
+```
+
+We can add meta information on sera and antigens using the `agGroups(), srGroups()` field, e.g. the homologous variant for each sera and then color accordingly, also by supplying an external file. The x-, and y- limits can be supplied to the `plot`, and you can access automatically generated plot limits with the `Racmacs:::mapPlotLims()` function. The triple dots and call to Racmacs are necessary to find the function.
+
+Try on your own:
+```{r}
+```
+
+Or run the provided code:
+```{r}
+lims <- Racmacs:::mapPlotLims(map, sera = FALSE)
+
+agGroups(map) <- sapply(agNames(map), function(x){
+  strsplit(x, "_")[[1]][2]
+} )
+srGroups(map) <- sapply(srNames(map), function(x){
+  strsplit(x, "_")[[1]][2]
+})
+
+map_colors <- c("A" = "red",
+                "B" = "blue",
+                "C" = "purple")
+
+agFill(map) <- map_colors[agGroups(map)]
+srOutline(map) <- map_colors[srGroups(map)]
+
+plot(map,
+     plot_labels = "antigens",
+     label.offset = 0.5,
+     plot_stress = TRUE,
+     xlim = lims$xlim,
+     ylim = lims$ylim)
+```
+
+Optimize map in Racmacs Viewer with Error Lines on. Error lines indicate the error per serum and antigen pair: Blue lines indicate that the error would be reduced if the pair was closer to each other than their current position ("pull") and red lines indicate the opposite ("red").
+
+To do that, move to the "Diagnostics" tab, activate the second panel to the right with the "E". Then click on the second panel to the left, which randomizes point position. 
+
+What does this do with the map stress? What does this do to the error lines?
+
+Then click on the "Relax map" panel on the left, which optimizes the map. What happens?
+
+```{r}
+Racmacs::view(map)
+```
+
+### Point triangulation
+
+To assess how well triangulated each point in the map is, we can use the `triangulationBlobs()` function. It calculates the position each point can occupy in the map without increasing the map stress by more than a user specified unit. A bigger area indicates that a point's position is more flexible given the data, and it's positition is not well resolved.
+
+```{r}
+plot(triangulationBlobs(map, stress_lim = 1, grid_spacing = 0.05))
+
+```
+
+# Noisy data
+
+Above, we were dealing with data where the titer distances can be perfectly represented in two dimensions. Now, we will do the same with more realistic, noisy data to examine how this translates to an antigenic map.
+
+To generate the more noisy dataset, we assume the following: individual sera can have high or low reactivity, which translates to higher or lower titers against all antigens. In addition, for each measurement we assume that normally distributed noise is part of the measured titer. 
+
+The actual logtiter against antigen $i$ measured in serum $s$ is therefore 
+
+$$logtiter_{i,s} = srGroupGMT_{i,S} + serumEffect_s + noise_{i,s}$$
+with the $srGroupGMT_{i,S}$ being the true underlying logtiter in serum group $S$ against antigen $i$, the $serumEffect_s$ the specific reactivity of serum $s$ and the measurement $noise_{i,s}$ for each measurement.
+
+```{r, generate_noisy_data}
+sd_noise <- 0.7
+sd_serum <- 2
+set.seed(100) #seed for random values, for reproducible results keep it at 100
+
+generate_noisy_samples <- function(n_samples, base_data, sd_sample, sd_noise,
+                                   base_name = "serum", ag_names){
+  
+  # add serum reactivity
+  temp <- lapply(rnorm(n_samples,0,sd_sample), function(x){
+      base_data + x
+  })
+  
+  temp <- do.call(cbind, temp)
+  
+  # add measurement noise
+  temp <- temp + rnorm(length(temp), 0, sd_noise)
+  
+  colnames(temp) <- paste0(c(1:n_samples), base_name)
+  rownames(temp) <- ag_names
+  return(temp)
+  
+}
+
+noisy_data <- lapply(1:ncol(titerdata), function(x){
+  generate_noisy_samples(10, log2(titerdata[,x]/10), sd_serum, sd_noise, colnames(titerdata)[x], rownames(titerdata))
+})
+
+noisy_data <- do.call(cbind, noisy_data)
+
+```
+
+We can plot the noisy data:
+
+```{r plot_noisy_data}
+as.data.frame(noisy_data) %>%
+  rownames_to_column(., var = "Antigen") %>%
+  pivot_longer(cols = colnames(.)[!grepl("Antigen", colnames(.))], names_to = "Serum", values_to = "logtiter") %>%
+  separate(col = "Serum", into = c("sr_name", "sr_group"), sep = "_") %>%
+  mutate(sr_name = paste0(sr_name, "_", sr_group)) -> noisy_long
+
+# let's calculate the mean fc and antigenic distance
+noisy_long %>%
+  group_by(sr_group, Antigen) %>%
+  reframe(logtiter = mean(logtiter)) %>%
+  group_by(sr_group) %>%
+  mutate(fc = max(logtiter)-logtiter) -> gmt_data
+
+noisy_long %>%
+  ggplot(aes(x = Antigen, y = logtiter, color = sr_group)) +
+  geom_line(aes(group = sr_name), alpha = 0.5) + 
+  geom_line(data = gmt_data, aes(group = sr_group), linewidth = 1) +
+  geom_point(data = gmt_data, aes(group = sr_group)) +
+  geom_text(data = gmt_data, aes(label = round(fc, 2)), y = 8.5) +
+  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 1), fill = "grey60", color = NA, alpha = 0.01) +
+  facet_wrap(~sr_group)
+```
+
+The data is distributed around the mean, which still resembles the true mean we used as original input. Now, there are data points which are below the artifical limit of detection of 20 (LOD). **The antigenic cartography algorithm handles <LOD titers by allowing the distance between antigen and serum to be greater than the distance from maximum titer to threshold without any penalties. To do that, we have to set titers <20 to "<20" in the titer table**:
+
+
+```{r}
+
+```
+
+
+or run the code snippet here:
+
+```{r}
+noisy_data_titer <- round(2^noisy_data*10,2)
+noisy_data_titer <- apply(noisy_data_titer, c(1,2), function(x){
+  if(x < 20) {
+    "<20"
+  } else {
+    x
+  }
+})
+
+```
+
+
+We can now make an acmap object:
+
+```{r}
+map_noisy <- make.acmap(noisy_data_titer)
+```
+
+Making the map from this data comes with warning and error messages:
+
+`Error: Map contains disconnected points (points that are not connected through any path of detectable titers so cannot be coordinated relative to each other). To optimize anyway, rerun with 'options = list(ignore_disconnected = TRUE)'.`
+
+This error occurs when we have samples for which titrations against individual antigens are not connected by titers above the LOD, which is the case for many serumB samples:
+
+```{r}
+kable(noisy_data_titer)
+```
+
+
+Sera (and antigens) need enough titers >LOD to be positioned in an antigenic map. If too many measurements are <LOD, then they cannot be reliably positioned and we receive the following warning messages:
+
+`Warning: The following SERA are too underconstrained to position in 2 dimensions and coordinates have been set to NaN: `
+
+or 
+
+`Warning: The following SERA have do not have enough titrations to position in 2 dimensions. Coordinates were still optimized but positions will be unreliable`
+
+You will notice that we did not receive these messages with the clean data. The more >LOD titrations in the titer table, the better variants and sera can be position.
+
+We can still optimize the noisy map. *Importantly,
+as we have continuous measurements now, we need to set the map dilutionstepsize to 0. A dilutionstepsize of 1 indicates discrete read-outs of the dilutionstep.*
+
+```{r}
+map_noisy <- make.acmap(noisy_data_titer, options = list(ignore_disconnected = TRUE))
+dilutionStepsize(map_noisy) <- 0
+map_noisy <- optimizeMap(map_noisy, 2, 100, options = list(ignore_disconnected = TRUE))
+```
+
+Let's style the map the same as the previous map:
+
+```{r}
+
+
+```
+
+```{r}
+agGroups(map_noisy) <- sapply(agNames(map_noisy), function(x){
+  strsplit(x, "_")[[1]][2]
+} )
+srGroups(map_noisy) <- sapply(srNames(map_noisy), function(x){
+  strsplit(x, "_")[[1]][2]
+})
+
+agFill(map_noisy) <- map_colors[agGroups(map_noisy)]
+srOutline(map_noisy) <- map_colors[srGroups(map_noisy)]
+
+# realign it to the clean map
+map_noisy <- realignMap(map_noisy, map)
+
+plot(map_noisy,
+     plot_labels = "antigens",
+     label.offset = 0.5,
+     plot_stress = TRUE)
+
+```
+
+We see that the sera are still centered around their homologous variant in most cases, indicating that their titers are highest against this variant. But sera that have low fold changes move, i.e. low antigenic distances from maximum titer antigen to the others, move to the center of the antigenic map. Sera with highly specific titers, i.e. high titers against a single antigen and low titers against the others, move to the periphery of the map area closest to their highest titer antigen.
+
+We can look at the effect of <LOD on titer error in the Racmacs' Viewer, by selecting individual sera and moving them (rightmost panel):
+
+```{r}
+RacViewer(map_noisy)
+```
+
+What do you think contributes to the map stress, i.e. error between titer distances and map distances? Is it the serum reactivity or the measurement noise? You can find out by simulating data with either effect.
+
+
+## Map comparison
+
+We can compare the noisy map with the clean data map using the `procrustesMap()` function, where arrows point to the variants' positions in the comparison map:
+```{r}
+
+```
+
+
+```{r}
+plot(procrustesMap(map_noisy, map),
+     xlim = lims$xlim,
+     ylim = lims$ylim)
+```
+
+The procrustes comparison shows that the noisy and clean data map conformations for the antigens are almost identical and reveals one advantage of antigenic cartography: the smoothing out of noise.
+
+
+## Noisy map triangulation
+
+As a last step, let's look at how well antigen and sera are triangulated in the noisy map:
+
+
+```{r}
+plot(triangulationBlobs(relaxMap(map_noisy), stress_lim = 1, grid_spacing = 0.05))
+```
+
+You will receive a warning and error message because some sera have "NaN" coordinates as they could not be positioned due to too many <LOD titers. When we remove them from the map by accessing the `srCoords()` field, we can calculate the map triangulation:
+
+```{r}
+
+```
+
+or run the provided code:
+
+```{r}
+# get NaN sera
+na_sera <- srNames(map_noisy)[is.na(srCoords(map_noisy)[,1])]
+
+
+plot(triangulationBlobs(relaxMap(removeSera(map_noisy, na_sera)), 
+                        stress_lim = 1, grid_spacing = 0.05))
+```
+
+We can also look at which sera are the ones that get `NA` coordinates, meaning they cannot be positioned because of too many <LOD titers:
+
+```{r}
+
+```
+
+```{r}
+
+noisy_long %>%
+  ggplot(aes(x = Antigen, y = logtiter, color = sr_group)) +
+  geom_line(aes(group = sr_name), alpha = 0.5) + 
+  geom_line(data = noisy_long %>% 
+              filter(sr_name %in% na_sera), aes(group = sr_name), color = "red", alpha = 1) + 
+  geom_line(data = gmt_data, aes(group = sr_group), linewidth = 1) +
+  geom_point(data = gmt_data, aes(group = sr_group)) +
+  geom_text(data = gmt_data, aes(label = round(fc, 2)), y = 8.5) +
+  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 1), fill = "grey60", color = NA, alpha = 0.01) +
+  facet_wrap(~sr_group)
+```
+
+In all cases, at least 2 of the three antigens are <LOD. There is too little information in the data to triangulate the points in 2 dimensions.
