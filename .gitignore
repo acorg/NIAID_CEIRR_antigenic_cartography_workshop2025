@@ -49,3 +49,6 @@ po/*~
 rsconnect/
 
 ./organisation/
+
+# chunks
+/code/*_files
