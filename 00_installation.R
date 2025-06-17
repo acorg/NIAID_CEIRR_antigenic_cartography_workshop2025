@@ -1,7 +1,13 @@
 # Run this file to install all necessary packages
 
 # Package names
-packages <- c("Racmacs","tidyverse", "ggplot2", "dplyr", "tidyr", "remotes", "knitr")
+packages <- c(
+  "Racmacs",
+  "tidyverse",
+  "remotes",
+  "knitr",
+  "here"
+)
 
 # Install packages not yet installed
 installed_packages <- packages %in% rownames(installed.packages())

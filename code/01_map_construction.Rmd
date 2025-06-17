@@ -10,6 +10,7 @@ editor_options:
 
 ```{r setup, include=FALSE}
 rm(list = ls()) # clear environment at the beginning of each session
+setwd(here::here("code/")) # set correct working directory
 knitr::opts_chunk$set(echo = TRUE,
                       fig.width=8, fig.height=6,
                       fig.align = "center")
@@ -36,7 +37,7 @@ Or run the provided code:
 
 ```{r load_packages}
 # Package names
-packages <- c("Racmacs","ggplot2", "dplyr", "knitr", "tidyverse")
+packages <- c("Racmacs", "knitr", "tidyverse", "seqinr")
 
 # Install packages not yet installed
 installed_packages <- packages %in% rownames(installed.packages())
@@ -53,9 +54,9 @@ theme_set(theme_bw() +
 
 ### Load the titer data
 
-We will be working with artifical titer data. 
+We will be working with artificial titer data. 
 
-Load the data from `data/01_titerdata.csv`:
+Load the data from `data/01_artificial_titerdata.csv`:
 
 ```{r}
 
@@ -64,7 +65,7 @@ Load the data from `data/01_titerdata.csv`:
 or run the provided code:
 
 ```{r load_data}
-titerdata <- read.csv("../data/01_titerdata.csv", row.names = "X")
+titerdata <- read.csv("../data/01_artificial_titerdata.csv", row.names = "X")
 ```
 
 Let's look at the format of the titer data:
@@ -501,3 +502,61 @@ noisy_long %>%
 ```
 
 In all cases, at least 2 of the three antigens are <LOD. There is too little information in the data to triangulate the points in 2 dimensions.
+
+## SARS-CoV-2 map
+
+The map we will be using going forwards, with SARS-CoV-2 variants.
+
+Read the titer table
+```{r}
+titers = read.csv("../data/01_sars_cov_2_titerdata.csv", row.names = 1)
+```
+
+Make the map.
+```{r}
+sars_cov_2_map = Racmacs::acmap(titer_table = titers) %>%
+  Racmacs::optimizeMap(
+    number_of_dimensions = 2,
+    number_of_optimizations = 1000
+  )
+
+plot(sars_cov_2_map, plot_labels = "antigens")
+```
+
+Set styling.
+```{r}
+antigen_colors = readRDS("../data/01_sars_cov_2_antigen_colors.RDS")
+Racmacs::agFill(sars_cov_2_map) = antigen_colors[agNames(sars_cov_2_map)]
+Racmacs::srOpacity(sars_cov_2_map) = 0.4
+```
+
+Rotate & reflect.
+```{r}
+plot(sars_cov_2_map, plot_labels = "antigens")
+plot(rotateMap(sars_cov_2_map, 60), plot_labels = "antigens")
+plot(reflectMap(sars_cov_2_map), plot_labels = "antigens")
+```
+
+Rotate & reflect correctly
+```{r}
+source("helpful_functions/rotateMapCorrectly.R")
+sars_cov_2_map_oriented = rotateMapCorrectly(sars_cov_2_map)
+
+plot(sars_cov_2_map_oriented, plot_labels = "antigens")
+```
+
+Add sequences
+
+```{r}
+dna_sequences_read = seqinr::read.fasta(file = "../data/01_spike_sequences.fasta")
+  
+aa_sequences_read = dna_sequences_read %>%
+  map(seqinr::translate) %>%
+  do.call(what = rbind) %>%
+  toupper()
+
+Racmacs::agSequences(sars_cov_2_map) = aa_sequences_read[agNames(sars_cov_2_map),]
+
+Racmacs::view.acmap(sars_cov_2_map)
+```
+
