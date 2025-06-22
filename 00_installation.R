@@ -6,7 +6,8 @@ packages <- c(
   "tidyverse",
   "remotes",
   "knitr",
-  "here"
+  "here",
+  "seqinr"
 )
 
 # Install packages not yet installed
@@ -16,4 +17,5 @@ if (any(installed_packages == FALSE)) {
 }
 
 # The ablandscapes package needs to be installed from github
+# You need to have developer tools installed as described in the README
 remotes::install_github("acorg/ablandscapes")
