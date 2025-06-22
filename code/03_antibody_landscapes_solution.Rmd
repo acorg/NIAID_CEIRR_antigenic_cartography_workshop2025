@@ -1,0 +1,45 @@
+---
+title: "Antibody landscapes"
+author: "Antonia Netzl"
+date: "2025-06-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls()) # clear environment at the beginning of each session
+setwd(here::here("code/")) # set correct working directory
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.width=8, fig.height=6,
+                      fig.align = "center")
+```
+
+## Mapping complex exposure histories with antibody landscapes
+
+This script contains code to construct antibody landscapes on top of antigenic maps. We will be mainly working with simulated SARS-CoV-2 data.
+
+```{r load_packages}
+# Package names
+packages <- c("Racmacs", "knitr", "tidyverse", "ablandscapes")
+
+# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+
+invisible(lapply(packages, library, character.only = TRUE))
+
+#set ggplot2 theme
+theme_set(theme_bw() + 
+            theme(strip.background.x = element_blank()))
+```
+
+### Antigenic maps from single vs. multi exposure sera
+
+
+
+```{r ag_maps, echo=FALSE}
+single_map <- read.acmap(filename = file.path(here::here(), "data", "maps", "01_sars_cov_2_map.ace"))
+
+```
+
