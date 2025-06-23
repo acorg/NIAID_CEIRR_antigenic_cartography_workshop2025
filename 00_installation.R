@@ -7,7 +7,8 @@ packages <- c(
   "remotes",
   "knitr",
   "here",
-  "seqinr"
+  "seqinr",
+  "r3js"
 )
 
 # Install packages not yet installed
