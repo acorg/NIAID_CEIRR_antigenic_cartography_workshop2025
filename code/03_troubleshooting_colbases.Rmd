@@ -1,0 +1,306 @@
+---
+title: "03 Throubleshooting - Sera without Homologous Antigens"
+author: "Sina Tureli (st757@cam.ac.uk)"
+date: '2025-06-18'
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r}
+rm(list = ls()) # clear environment at the beginning of each session
+setwd(here::here("code/")) # set correct working directory
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.width=4, fig.height=4,
+                      fig.align = "center")
+```
+
+This markdown contains the exercise code to teach how and when the arguments
+minimum_column_basis and fixed_column_bases are useful for optimizing maps.
+For this exercise it is useful to know the following functions from Racmacs
+package: make.acmap, procrustesMap, agFill, srOutline, realignMap, colBases,
+srNames, tableDistances, titerTable. If you don't know any of the functions 
+type for instance ?realignMap to read the documentation.
+
+### Load the required packages
+
+```{r}
+library(Racmacs)
+```
+
+### Load the titer data
+
+We will be working with artificial titer data. The "ground truth" titer table is 
+a table with thirty-four antigens and sixteen sera. Of the thirty-four antigens, 
+thirty belong in cluster one and four belong in cluster two. Of the sixteen sera, 
+fifteen belong in cluster one and one belongs in cluster two. Lets load the titer 
+table, and make the ground truth map out of it (full_map).
+
+```{r}
+full_titerdata <- read.csv("../data/03_colbases_fulltable.csv", row.names = "X")
+full_map <- make.acmap(full_titerdata,
+                       ag_names = rownames(full_titerdata),
+                       sr_names = colnames(full_titerdata),
+                       number_of_dimensions = 2,
+                       number_of_optimizations = 500)
+
+```
+
+Exercise 1: Color the map so that first 30 antigens and first 15 sera are red, 
+the following four antigens and the last serum is blue. Use fill coloring for 
+antigens and outline coloring for sera. Then view the map. 
+
+```{r exercise1}
+
+```
+
+```{r solution1}
+agfills = append(rep("red",30), rep("blue",4))
+sroutlines = append(rep("red",15), c("blue"))
+agFill(full_map) <- agfills
+srOutline(full_map) <- sroutlines
+view(full_map, options=list(xlim=c(-5,5), ylim=c(-5,5)))
+```
+
+For your convenience sera are named according to which antigen they  are 
+homologous to. In particular cluster two's serum is homologous to C2_Ag3. 
+
+We can imagine that cluster 1 is the currently circulating cluster and cluster 2 is a
+new cluster that is just emerging and we only have partial data for. Therefore one 
+may encounter the following scenario: 
+
+Lab 1 has all the antigens from cluster1 and antigens C2_Ag0 to C2_Ag2 but only 
+has sera from cluster 1 and has titrated these against each other.
+
+Lab 2 says that it was able to get a serum that it thinks should belong
+to cluster 2, but it only has antigens from cluster 1 and has titrated these
+against each other.
+
+Combining these two, we have a titer table where the "mystery serum" (C2_Ag3_Hom_sera) 
+has only been titrated against cluster 1 antigens and we do not have 
+the myster serum's homologous antigen (C2_Ag3) in the map. Lets load this table 
+make a map from this:
+
+```{r}
+partial_titerdata <- read.csv("../data/03_colbases_partialtable.csv", row.names = "X")
+partial_map <- make.acmap(partial_titerdata,
+                          ag_names = rownames(partial_titerdata),
+                          sr_names = colnames(partial_titerdata),
+                          number_of_dimensions = 2,
+                          number_of_optimizations = 1000)
+
+```
+
+Exercise 2: Apply the style and orientation of the full_map to partial_map and
+then view the map.
+
+```{r exercise2}
+
+```
+
+```{r solution2}
+partial_map <- applyPlotspec(partial_map, full_map)
+partial_map <- realignMap(partial_map, full_map)
+view(partial_map, options=list(xlim=c(-5,5), ylim=c(-5,5)))
+```
+
+Well that is disappointing! Using the partial titer table, the new antigens 
+(blue circles) still form a new cluster but the new serum (blue square), despite 
+having very low titers to cluster 1 antigens, is very close to cluster 1. 
+What is going on? Well remember that the titers are converted to antigen-serum 
+distances via the following formula (Lecture 01):
+
+$$D_{i,s} = max(log_2(titer_{s}/10)) - log_2(titer_{i,s}/10)$$
+
+Exercise 3:
+Look at the titers and table distances of the blue serum and explain why it is 
+placed close to the red cluster.
+
+```{r exercise3}
+
+```
+
+```{r solution3}
+print(titerTable(partial_map)[,"C2_Ag3_Hom_Sr"])
+print(tableDistances(partial_map)[,16])
+```
+Note that because this serum has not been titrated against the blue cluster, 
+its maximum titer (320) occurs against two antigens from the red cluster 
+(C1_Ag20 and C1_Ag28). Therefore the table distance against these antigens are
+zero and that is what the optimization tries to achieve as well as alot of low 
+distances like 1 against other antigens from the red cluster. Had this serum 
+been titrated against its homologous antigen as well and its titer was something 
+like 1280, a titer of 320 would instead be a distance of 2 instead of 0. So maybe 
+the formula can be changed somewhat to reflect this fact. Note that the intention
+of the formula above is to produce something to the effect of
+
+$$D_{i,s} = hom_s - log_2(titer_{i,s}/10)$$
+
+where the first term on the RHS is the homologous titer of serum s. We do not use
+this formula but replace it with maximum for two reasons:
+
+1- It is not uncommon to have non-homologous titers which are somewhat higher than
+the homologous titer (high reactivity antigens for instance), and in order to
+avoid negative table distances, we use maximum instead. 
+
+2- It is not uncommon to have a serum not titrated against the homologous antigen
+but it might still be titrated against another antigen which is antigenically
+similar to its homologous antigen which is expected to have similarly high titers.
+Therefore maximum titer still captures a value similar to the homologous titer.
+
+The maximum term
+
+$$max(log_2(titer_{s}/10))$$
+
+is called the column basis for the serum s. This formula works fine as long 
+as we have antigens which have reactivity similar to the homologous antigen
+of serum s. If not then even the maximum might be quite low. For instance
+if a serum which has not been titrated against its homologous or similar
+antigens has all <10 for its titers, its table distances to each of these
+antigens will be zero but in reality one can expect this serum to be quite
+further away from these antigens because very low titers might indicate 
+antigenic differences. If we expect that homologous antigen titer should 
+be something around 1280, then we can replace the formula above with:
+
+$$D_{i,s} = max(1280, max(log_2(titer_{s}/10))) - log_2(titer_{i,s}/10)$$
+
+This is what the minimum_column_basis parameter in make.map does (but you can
+replace 1280 with any number you want). In order to determine what is a reasonable 
+value for homologous antigen titers is, lets look at what they look like for 
+the red cluster.
+
+Exercise 4:
+Extract the column basis for the red cluster and plot them as a scatter plot
+and plot the mean using a line
+```{r exercise 4}
+
+```
+
+```{r solution 4, fig.height=5}
+cb <- colBases(partial_map)[1:15]
+sera = srNames(partial_map)[1:15]
+
+#set figure margins
+par(mar=c(10, 5, 2, 2))
+
+#plot column bases and mean
+plot(cb, xlab="", ylab="Column Basis", xaxt="n", ylim=c(2, 11))
+abline(h=mean(cb), col="red")
+
+#format axes
+axis(1, labels=FALSE)
+axis(2, at=2:11)
+text(x=1:15, y=par("usr")[3]-0.5, labels=sera, srt=90, adj=1, xpd=TRUE, xaxt="n")
+mtext("Column Basis", side=1, line=8.5, cex=1)
+```
+
+
+So the column basis seems to be centered around 6-7 in log scale or 640-1280
+in linear scale (note that conversion to log scale is done via log2(titer/10)).
+So we can try setting the minimum column basis at 6 or 7 (the minimum column
+basis input must be in linear domain and in string format). Can you guess what is 
+going to happen to distances of cluster 1 when we do that (especially for those
+whose maximum titers are less than 1280). Compute the map with minimum_column_basis
+of 1280, apply the style and orientation of full_map then do a procrustes of this
+new map against the full_map.
+
+```{r exercise 5}
+
+```
+
+```{r solution 5}
+mincol_map <- make.acmap(partial_titerdata,
+                         ag_names = rownames(partial_titerdata),
+                         sr_names = colnames(partial_titerdata),
+                         number_of_dimensions = 2,
+                         number_of_optimizations = 2000,
+                         minimum_column_basis = "1280")
+
+mincol_map <- applyPlotspec(mincol_map, full_map)
+mincol_map <- realignMap(mincol_map, full_map)
+view(procrustesMap(mincol_map, full_map), options=list(xlim=c(-5,5), ylim=c(-5,5)))
+
+```
+
+Well, the blue serum now seems to move away roughly to the same distance as before 
+from the center of the red cluster antigens (though a different angle) but the red 
+clusters sera are completely distorted and they also move away in different 
+directions. This is because whenever the minimum_column_basis is larger than a 
+serum's maximum titer, the table distances of that serum will be inflated 
+compared to the case when no minimum_column_basis is supplied:
+
+```{r}
+print(as.integer(tableDistances(mincol_map)[,10]) - as.integer(tableDistances(partial_map)[,10]))
+```
+
+We can try decreasing the column basis so that the red cluster is distorted less 
+but then the blue serum will move closer to the red cluster again. We leave this 
+as an extra exercise for the interested reader.
+
+So it seems these the two goals of keeping the red cluster intact but getting
+the true distance of blue serum from the center of the red cluster are 
+contradictory to each other. Is there a more clever way of doing this? Could we 
+for instance just set the minimum_column_basis for a chosen subset of sera and 
+leave the others as they are (that is whatever the maximum value is). 
+The argument fixed_column_bases allows us to do just that. This should be a 
+vector of values with length equal to number of sera and sets the minimum column 
+basis for each serum individually (unlike minimum_column_basis, it should be 
+supplied in log values). So if we were to supply as input a vector which is 
+equal to maximum titer for all the red sera and 7 for the blue serum, then we 
+can achieve what we want. Carry out this in the next exercise and view the map 
+as before:
+
+```{r exercise 6}
+
+```
+
+```{r solution 6}
+cb <- apply(X=logtiterTable(partial_map), FUN=max, MARGIN=2, 
+            na.rm=TRUE)
+# you also use the colBases function on partial_map. Think about why 
+# na.rm=TRUE is necessary here.
+
+# set the column basis for the blue serum to 7, originally it is 5.
+cb[[16]] = 7 
+
+fixedcol_map <- make.acmap(partial_titerdata,
+                           ag_names = rownames(partial_titerdata),
+                           sr_names = colnames(partial_titerdata),
+                           number_of_dimensions = 2,
+                           number_of_optimizations = 2000,
+                           fixed_column_bases = cb)
+
+fixedcol_map <- applyPlotspec(fixedcol_map, full_map)
+fixedcol_map <- realignMap(fixedcol_map, full_map)
+view(procrustesMap(fixedcol_map, full_map),
+     options=list(xlim=c(-5,5), ylim=c(-5,5)))
+```
+
+Now the map looks much more reasonable. Note that we supplied a minimum column
+basis of 7 for the blue serum guided by what we have seen from other sera's column
+bases in exercise 4. The "real" column basis of this serum is indeed 7 (you can
+see this from the full_map), although it could be quite lower or higher than 
+the mean we estimated. In reality we won't be privy to this information and will 
+likely have to try different minimum column basis values for this serum and will 
+have to decide on a value based on parsimony with other sources of information. 
+
+In summary, the main justification for using the minimum/fixed column basis 
+approach would be that the titers of the blue serum (from the partial table)
+are generally quite low and that it is likely not titrated against an antigen
+which is similar to its homologous antigen. There is still the possibility that
+this serum was actually from the red cluster but it is a low reactivity serum
+and thus has generally low titers, even against its homologous antigen. Therefore
+where as this approach can resolve issues arising from not titrating against
+homologous antigens, its usage should be determined by carefully weighing every
+other piece of information you have about these antigens and sera and the 
+reason for the choice should be clearly documented. Ideally this approach
+should be more like a first pass analysis of the possible ranges of antigenic 
+relationships between the sera and antigens in the map. In this case a scientist 
+could argue that the situation is unclear: if the new serum is a low reactivity 
+serum it could as well be from the red cluster, but if it is not then it most 
+likely comes from a distinct cluster. This conclusion then should be revisited 
+in a future time point with newly accumulated experimental data and scientific 
+knowledge.
