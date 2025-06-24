@@ -205,7 +205,7 @@ plot_landscapes_from_list <- function(data3js, # base map as r3js object
         padding = 0.2,
         options = list(
           col.surface = lndscp_colors[srg, "Color"],
-          opacity.surface = 1
+          opacity.surface = 0.8
         )
       )
       
@@ -349,7 +349,7 @@ rmse_per_variant <- function(lndscp_fits){
 }
 
 
-return_idvl_fitted_value <- function(temp_fit){
+return_idvl_fitted_value <- function(temp_fit, target_coords = NULL){
   
   cone_heights <- temp_fit$cone$cone_heights
   slope <- temp_fit$cone$cone_slope
@@ -357,7 +357,12 @@ return_idvl_fitted_value <- function(temp_fit){
   
   idvl_fitted <- list()
   for(x in 1:nrow(coords)){
-    temp_dists <- dist(rbind(coords[x,], agCoords(temp_fit$acmap)), method = "euclidean")
+    if(is.null(target_coords)){
+      temp_dists <- dist(rbind(coords[x,], agCoords(temp_fit$acmap)), method = "euclidean")  
+    } else {
+      temp_dists <- dist(rbind(coords[x,], target_coords), method = "euclidean")  
+    }
+    
     target_dists <- as.matrix(temp_dists)[,1]
     
     idvl_fitted[[rownames(temp_fit$logtiters)[x]]] <- cone_heights[x] - slope*target_dists[2:length(target_dists)]
