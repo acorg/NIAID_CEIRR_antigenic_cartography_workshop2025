@@ -15,7 +15,14 @@ knitr::opts_chunk$set(echo = TRUE,
 
 # Mapping complex exposure histories with antibody landscapes
 
-This script contains code to construct antibody landscapes on top of antigenic maps. We will be mainly working with simulated SARS-CoV-2 data. Much of the content was previously made available here: https://doi.org/10.5281/zenodo.13471558
+This script contains tasks to construct antibody landscapes on top of antigenic maps. The solutions are 
+available in `code/04_antibody_landscapes_solutions.Rmd`. 
+
+We will be mainly working with simulated SARS-CoV-2 data. Much of the content was previously made available here: https://doi.org/10.5281/zenodo.13471558
+
+Information on the ablandscapes package can be found here: https://rdrr.io/github/acorg/ablandscapes/
+
+For plotting html objects, we will use the r3js package: https://cran.r-project.org/web/packages/r3js/index.html
 
 ```{r load_packages}
 # Package names
@@ -36,17 +43,14 @@ theme_set(theme_bw() +
 
 ### Antigenic maps from single vs. multi exposure sera
 
-
-
 ```{r ag_maps}
 single_map <- read.acmap(filename = file.path(here::here(), "data", "maps", "01_sars_cov_2_map.ace"))
-
 ```
 
 
 Antibody landscapes show how immunity distributes across variants in an antigenic map. The cross-reactivity of sera is quantified by the landscape's slope. The steeper the slope, the more specific a serum, and vice versa. The underlying geometry of the antigenic map - one antigenic distance unit corresponds to one two-fold change of neutralization titers - means that single exposure sera, from which the map was built, have a landscape slope around 1 on the log2 scale: With each antigenic distance unit away from the cone apex, the titers decrease by one two-fold. The slopes of multi-exposure sera are much lower than the slopes of single exposure sera.
 
-Multiple exposures are known to increase cross-reactivity. We here simulate the increase in cross-reactivity by reducing the titer fold changes based on values from the data by [Rössler, Netzl, et al. (2022)](https://doi.org/10.1038/s41467-022-35312-3). The slopes for multi-exposure sera in their data were between 0.4 (Pre-Omicron + BA.2 reinfection) and 0.8 (Vaccinated + Delta infection). We will simulate Delta reinfection by adjusting the Wu.1 infected single exposure samples to match the 0.8 log2-scale slope, and the BA.2 reinfection by adjusting the same samples with the log2-slope of 0.4.
+Multiple exposures are known to increase cross-reactivity. We here simulate the increase in cross-reactivity by reducing the titer fold changes based on values from the data by [Rössler, Netzl, et al. (2022)](https://doi.org/10.1038/s41467-022-35312-3). The slopes for multi-exposure sera in their data were between 0.4 (Pre-Omicron + BA.2 reinfection) and 0.8 (Vaccinated + Delta infection). We will simulate Delta Breakthrough infection by adjusting the Wu.1 infected single exposure samples to match the 0.8 log2-scale slope, and the BA.2 reinfection by adjusting the same samples with the log2-slope of 0.4.
 
 ```{r creating_multi_exposure_sera}
 single_wu1 <- logtiterTable(single_map)[,grepl("Wu.1", colnames(titerTable(single_map)))]
@@ -99,43 +103,25 @@ Making maps from multi-exposure sera comes with multiple difficulties. **Most im
 A map from multiple exposures shows immune escape in these specific sera, therefore, distinct exposure histories should not be combined as they likely have different immune escape patterns. To illustrate the effect of multiple exposure cross-reactivity on an antigenic map, we construct maps for each of the serum groups shown above:
 
 ```{r}
-wu1_single_map <- make.acmap(apply(single_wu1, 1:2, function(x)2^x*10))
-delta_bt_map <- make.acmap(apply(delta_bt, 1:2, function(x)2^x*10))
-ba2_reinf_map <- make.acmap(apply(ba2_reinf, 1:2, function(x)2^x*10))
-
-# change colors and orientation
-agFill(wu1_single_map) <- agFill(single_map)
-agFill(delta_bt_map) <- agFill(single_map)
-agFill(ba2_reinf_map) <- agFill(single_map)
-
-wu1_single_map <- realignMap(wu1_single_map, single_map)
-delta_bt_map <- realignMap(delta_bt_map, single_map)
-ba2_reinf_map <- realignMap(ba2_reinf_map, single_map)
+# don't forget to transform the titers from log2 titer to linear titers
+wu1_single_map <- 
+delta_bt_map <- 
+ba2_reinf_map <- 
 
 # get map limits
 lims <- Racmacs:::mapPlotLims(single_map, sera = FALSE)
 xlim_zoom <- lims$xlim
 ylim_zoom <- lims$ylim
-# plot it
+
 ```
 
+And plot them:
 
 ```{r}
 # Do plotting
-par(mfrow = c(2, 3))
 
-plot(wu1_single_map, fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE)
 
-plot(delta_bt_map, fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom+0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE)
-
-plot(ba2_reinf_map, fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d",  plot_stress = TRUE)
-
-plot(procrustesMap(wu1_single_map, wu1_single_map), fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE)
-
-plot(procrustesMap(delta_bt_map, wu1_single_map), fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom+0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE)
-
-plot(procrustesMap(ba2_reinf_map, wu1_single_map), fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE)
-
+# and compare them with the procrustesMap() function
 ```
 
 Given that map distances are based on fold changes from the maximum titer variant in a serum, making maps from cross-reactive multi-exposure sera condenses map and overshadows antigenic differences between variants. 
@@ -177,29 +163,15 @@ The *transposed* raw titer table, not the logtitertable, with "<LOD" titers writ
   
 
 ```{r}
-par(mfrow = c(1, 1)) # put plots back to original state
-
 # create a list of titer tables. You can also fit each table independently
 titertables <- list("Wu-1 infection" = titerTable(wu1_single_map), 
                     "Delta Breakthrough" = titerTable(delta_bt_map), 
                     "BA.2 reinfection" = titerTable(ba2_reinf_map))
 
 # do the fit per serum group on base map
-lndscp_fits <- lapply(titertables, function(titer_table){
-  ablandscape.fit(
-           titers = t(titer_table), #errors can occur if the titertable for one serum group contains only one sample (then this sample is passed as a vector rather than a matrix) and if all titers in a sample are <LOD/NA. The titers are fitted, not the logtiters. <LOD values are estimated, but if all values are <LOD there is too little data to estimate from
-           bandwidth = 1, # only important for loess fit
-           degree = 1, # only important for loess fit
-           method = "cone",
-           error.sd = 1,
-           acmap = single_map,
-           control = list(
-             optimise.cone.slope = TRUE,
-             optimise.cone.coords = TRUE
-           )
-         )
+# use the ablandscape.fit() function
+lndscp_fits <- 
   
-})
 ```
 
 
@@ -207,32 +179,17 @@ The `lndscp_fits` object stores information on each fit, such as the fitted slop
 cone heights, and residuals between fitted landscape titer and measured titer. We can compare the fitted landscape slope and our multi exposure adjustments of 0.4 and 0.8 for the BA.1 reinfected and Delta breakthrough infections serum groups:
 
 ```{r, echo = TRUE}
-slopes <- lapply(lndscp_fits, function(x) x$cone$cone_slope)
+# access the slope values
+slopes <- 
 
 slopes
 ```
+
 The small variation from the expected values (1, 0.8, 0.4) can be explained by the fact that the base map contains other serum groups that determine the variants' positions. For example, if we use the Wu-1 only map from above as base map, we can see that the slopes match our input values:
 
 ```{r}
-lndscp_fits_single <- lapply(titertables, function(titer_table){
-  ablandscape.fit(
-           titers = t(titer_table), #errors can occur if the titertable for one serum group contains only one sample (then this sample is passed as a vector rather than a matrix) and if all titers in a sample are <LOD/NA. The titers are fitted, not the logtiters. <LOD values are estimated, but if all values are <LOD there is too little data to estimate from
-           bandwidth = 1, # only important for loess fit
-           degree = 1, # only important for loess fit
-           method = "cone",
-           error.sd = 1,
-           acmap = wu1_single_map,
-           control = list(
-             optimise.cone.slope = TRUE,
-             optimise.cone.coords = TRUE
-           )
-         )
-  
-})
 
-slopes <- lapply(lndscp_fits_single, function(x) x$cone$cone_slope)
 
-slopes
 ```
 
 ### Plotting antibody landscapes
@@ -243,34 +200,11 @@ To visualise antibody landscapes, we use the [`r3js`](https://cran.r-project.org
 z_lims <- c(0,10)
 axis_at <- seq(z_lims[1], z_lims[2],2)
 
-# Setup plot
-data3js <- ablandscapes:::lndscp3d_setup(
-    xlim = lims$xlim,
-    ylim = lims$ylim,
-    zlim = z_lims,
-    aspect.z = 0.5,
-    options = list(
-      lwd.grid =  0.05,
-      sidegrid.lwd = 1,
-      sidegrid.col = "grey40",
-      sidegrid.at = list("z" = axis_at),
-      zaxt = "log"
-    ),
-    show.axis = FALSE
-  )
+# Setup plot with ablandscapes:::lndscp3d_setup function
+data3js <- 
 
-# Add basemap
-data3js <- lndscp3d_map(
-    data3js = data3js,
-    fit = lndscp_fits[[1]],
-    xlim = lims$xlim,
-    ylim = lims$ylim,
-    zlim = c(0, 10),
-    show.map.sera = FALSE,
-    options = list(
-      opacity.basemap = 0.3
-    )
-  )
+# Add basemap with lndscp3d_map() 
+data3js <-
 
 data3js
 ```
@@ -286,59 +220,18 @@ titer_long %>%
 gmt_single <- gmt_data %>%
   filter(sr_group == "Wu-1 infection")
 
-coords <- agCoords(single_map)
-
-gmts <- gmt_single[match(rownames(coords), gmt_single$ag_name),]
-
-for (j in seq_len(nrow(coords))) {
-  data3js <- r3js::lines3js(
-          data3js,
-          x = rep(coords[j, 1], 2),
-          y = rep(coords[j, 2], 2),
-          z = c(0, gmts$logtiter[j]),
-          col = "grey50",
-          toggle = sprintf("GMT, %s", "Wu-1 infection"),
-          geometry = TRUE,
-          opacity = 0.7,
-          lwd = 0.2 
-        )
-        
-  data3js <- r3js::points3js(
-          data3js,
-          x         = coords[j, 1],
-          y         = coords[j, 2],
-          z         = gmts$logtiter[j],
-          size      = 0.9,
-          col  = "blue",
-          toggle = sprintf("GMT, %s", "Wu-1 infection"),
-          opacity   = 1 
-          
-        )
-}
+# try adding the GMTs to the data3js object with the functions r3js::lines3js() and r3js::points3js
 
 
-data3js
 ```
 
 
 And the landscape like this:
 
 ```{r}
-# Add GMT landscapes
-data3js <- lndscp3d_surface(
-      data3js = data3js,
-      object = lndscp_fits$`Wu-1 infection`,
-      crop2chull = FALSE,
-      toggle = sprintf("GMT landscape, %s", "Wu-1 infection"),
-      grid_spacing = 0.5,
-      padding = 0.2,
-      options = list(
-        col.surface = "blue",
-        opacity.surface = 1
-      )
-    )
+# Add GMT landscapes with the lndscp3d_surface() function
+data3js <- 
 
-data3js
 ```
 
 
@@ -365,7 +258,7 @@ We packed all of the above in functions in the `code/helpful_functions/antibody_
 source(file.path(here::here(), "code", "helpful_functions", "antibody_landscapes_functions.R"))
 
 # plot the base map
-data3js <-base_plot_data3js(map = single_map, 
+data3js <- base_plot_data3js(map = single_map, 
                   lndscp_fits = lndscp_fits, 
                              highlighted_ags = agNames(single_map), # variants to highlight in the antigenic map
                              ag_plot_names = agNames(single_map), # variant names to plot
@@ -427,34 +320,15 @@ comb_data <- combine_landscape_and_calculated_gmt(lndscp_fits, # named object wi
                                                   gmt_data)
 
 
-comb_data %>%
-  ggplot(aes(x = ag_name, y = logtiter, color = Data, group = Data)) + 
-  geom_point() + 
-  geom_line() + 
-  ylim(c(0, 9)) +
-  scale_x_discrete(limits = agNames(single_map),
-                   name = "Antigen variant") +
-  facet_wrap(~sr_group) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Plot the comparison:
+
 ```
 
 Below, we can look at how much the fitted and measured GMTs differ:
 
 ```{r}
-comb_data %>%
-  pivot_wider(names_from = Data, values_from = logtiter) %>%
-  mutate(gmt_diff = `Fitted Landscape GMT` - `Calculated GMT`) %>%
-  ggplot(aes(x = ag_name, y = gmt_diff)) + 
-  geom_hline(yintercept = 0, linetype = "dashed") + 
-  geom_point() + 
-  geom_line(aes(group = sr_group)) +
-  scale_x_discrete(limits = agNames(single_map),
-                   name = "Antigen variant") +
-  facet_wrap(~sr_group) +
-  scale_y_continuous(labels = function(x) paste0(round(2^x, 2), "x"),
-                     limits = c(-0.75, 0.75),
-                     name = "GMT difference") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Plot the difference between measured and fitted GMT
+
 
 ```
 
@@ -470,22 +344,11 @@ GMT landscape:
 
 ```{r}
 # helper function to get residuals
-residuals <- rmse_per_variant(lndscp_fits)
+residuals <- rmse_per_variant(lndscp_fits) # helper function
 
 
 # plot residuals
-residuals %>%
-  ggplot(aes(x = ag_name, y = rmse, fill = ag_name)) + 
-  geom_point(color = "grey20", shape = 21) + 
-  scale_x_discrete(limits = c("Total", agNames(single_map)),
-                   name = "Variant") +
-  ylab("RMSE (log2(FC))") + 
-  ylim(c(0,max(ceiling(residuals$rmse)))) +
-  facet_wrap(~sr_group) + 
-  theme_bw() +
-  theme(strip.background = element_blank(),
-        legend.position = "none",
-        axis.text.x = element_text(angle = 45, hjust = 1))
+
 ```
 
 We can also evaluate how much the individual landscapes differ from their fit:
@@ -496,23 +359,7 @@ idvl_fitted <- lapply(names(lndscp_fits), function(x){
     mutate(sr_group = x)
 })
 
-idvl_fitted <- do.call(rbind, idvl_fitted) %>%
-  mutate(Data = "Fitted") %>%
-  mutate(sr_name = paste0(sr_name, "_", sr_group)) %>%
-  rbind(., titer_long %>%
-          filter(sr_facet != "GMT") %>%
-          select(!sr_facet) %>%
-          mutate(Data = "Simulated"))
-
-idvl_fitted %>%
-  ggplot(aes(x = ag_name, y = logtiter, group = interaction(sr_name, Data), color = Data)) + 
-  geom_point() + 
-  geom_line(alpha = 0.4) + 
-  ylim(c(0, 9)) +
-  scale_x_discrete(limits = agNames(single_map),
-                   name = "Antigen variant") +
-  facet_wrap(~sr_name) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# plot individual serum fits
 ```
 
 
@@ -522,21 +369,8 @@ idvl_residuals <- lapply(names(lndscp_fits), function(x){
     mutate(sr_group = x)
 })
 
-idvl_residuals <- do.call(rbind, idvl_residuals)
+# plot individual serum residuals
 
-
-idvl_residuals %>%
-  ggplot(aes(x = ag_name, y = residuals)) + 
-  geom_hline(yintercept = 0, linetype = "dashed") + 
-  geom_line(aes(group = sr_name)) +
-  geom_point() + 
-  scale_x_discrete(limits = agNames(single_map),
-                   name = "Antigen variant") +
-  facet_wrap(~sr_group) +
-  scale_y_continuous(labels = function(x) paste0(round(2^x, 2), "x"),
-                     limits = c(-0.75, 0.75),
-                     name = "Titer Residuals") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
@@ -552,7 +386,7 @@ antigens as "\*" in the titer table for each serum. To demonstrate, we select ra
 for Wu-1 infected and Delta Breakthrough samples. We remove these antigens from the BA.1 reinfected titertables.
 
 ```{r}
-# randomly select not measured ags
+# select not measured ags
 not_measured_ags <- c("BA.2.75", "JN.1", "BF.7", "XBB.1.5", "HV.1")
 ```
 
@@ -562,26 +396,12 @@ titertables_sub[[1]][not_measured_ags,] <- "*"
 titertables_sub[[2]][not_measured_ags,] <- "*"
 titertables_sub[[3]] <- titertables_sub[[3]][-match(not_measured_ags, rownames(titertables_sub[[3]])),]
 
-lndscp_fits_sub <- lapply(titertables_sub, function(titer_table){
-  ablandscape.fit(
-           titers = t(titer_table), 
-           bandwidth = 1, # only important for loess fit
-           degree = 1, # only important for loess fit
-           method = "cone",
-           error.sd = 1,
-           acmap = single_map,
-           control = list(
-             optimise.cone.slope = TRUE,
-             optimise.cone.coords = TRUE
-           )
-         )
-  
-})
+# fit the subset tables
+lndscp_fits_sub <- 
 
 
-slopes <- lapply(lndscp_fits_sub, function(x) x$cone$cone_slope)
-
-slopes
+# get the slopes of the subset tables
+slopes <- 
 ```
 
 The remaining antigens were enough to fit very similar slopes to the full data set. *Importantly, removing the Wu-1 
@@ -601,9 +421,8 @@ We can interpolate the landscape value at any coordinate in the following way:
 ```{r}
 not_measured_coords <- agCoords(single_map)[not_measured_ags,]
 
-predicted_vals <- ablandscapes:::predict.ablandscape.fit(lndscp_fits_sub$`BA.2 reinfection`,
-                        not_measured_coords)
-predicted_vals
+# use the ablandscapes:::predict.ablandscape.fit() function to predict the value at the specific coordinates
+predicted_vals <- 
 ```
 
 You see that `NA` is returned for some antigens. That is because they are outside the convex hull of the landscape. As with any model (or assay), values outside the calibrated area are less reliable. It is still possible to interpolate them: 
@@ -611,40 +430,14 @@ You see that `NA` is returned for some antigens. That is because they are outsid
 $$cone\_height - ag\_dist \times cone\_slope$$
 
 ```{r}
-predicted_vals["XBB.1.5"]<- mean(return_idvl_fitted_value(lndscp_fits_sub$`BA.2 reinfection`, target_coords = not_measured_coords["XBB.1.5",]))
-predicted_vals["XBB.1.5"]
+predicted_vals["XBB.1.5"]<- 
 ```
 
 We can compare the fitted values from the complete fit with the interpolated values:
 
 ```{r}
-fitted_vals_complete <- lapply(lndscp_fits, function(x) x$fitted.values)
-fitted_vals_complete <- do.call(rbind, fitted_vals_complete) %>%
-  as.data.frame() %>%
-  rownames_to_column(var = "sr_group") %>%
-  pivot_longer(cols = colnames(.)[2:ncol(.)], names_to = "ag_name", values_to = "logtiter") %>%
-  mutate(Fit = "complete")
+# extract values from complete and subset fit and compare them
 
-fitted_vals_sub <- lapply(lndscp_fits_sub, function(x) x$fitted.values)
-fitted_vals_sub$`BA.2 reinfection` <- c(fitted_vals_sub$`BA.2 reinfection`, predicted_vals)
-fitted_vals_sub$`BA.2 reinfection` <- fitted_vals_sub$`BA.2 reinfection`[names(fitted_vals_sub$`Wu-1 infection`)]
-fitted_vals_sub <- do.call(rbind, fitted_vals_sub) %>%
-  as.data.frame() %>%
-  rownames_to_column(var = "sr_group") %>%
-  pivot_longer(cols = colnames(.)[2:ncol(.)], names_to = "ag_name", values_to = "logtiter") %>%
-  mutate(Fit = "interpolated")
-
-
-comp_data <- rbind(fitted_vals_complete, fitted_vals_sub) %>%
-  mutate(ag_in_fit = !(ag_name %in% not_measured_ags))
-
-comp_data %>%
-  ggplot(aes(x = ag_name, y = logtiter, color = Fit, group = Fit, shape = ag_in_fit)) + 
-  geom_point(position = position_dodge(width = 0.3)) + 
-  scale_x_discrete(limits = agNames(single_map),
-                   name = "Antigen variant") +
-  facet_wrap(~sr_group) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 ## Influenza antibody landscapes
@@ -689,26 +482,14 @@ srOutline(h3_map) <- h3basemap2015$sr_cols_outline
 ag_plot_names <- agNames(h3_map)
 lims <- Racmacs:::mapPlotLims(h3_map, sera = FALSE)
 
-flu_gmts <- apply(vaccine1997.titers.post, 1:2, function(x){
-  val <- log2(as.numeric(x)/10)
-  if(is.na(val)){
-    log2(5/10)
-  } else {
-    val
-  }
-})
-
-flu_gmts <- colMeans(flu_gmts)
-
-as.data.frame(flu_gmts) %>%
-  rownames_to_column(var = "ag_name") %>%
-  mutate(sr_group = "flu",
-         gmt = flu_gmts) %>%
-  select(!flu_gmts) -> flu_gmts
-                     
 lndscp_cols["flu", "Color"] <- "#F87"
-
 plot(h3_map)
+```
+
+
+```{r}
+# calculate flu GMTs for vaccine1997.titers.post
+flu_gmts <- 
 ```
 Above is the influenza H3 base map, coloured by antigenic cluster. We will put the flu landscape on top with the 
 same parameters as used in the publication (bandwith = 11, degree = 1). You can look at the effect of changing both parameters in the example antibody landscape data from the paper by Fonville et al. (DOI: 10.1126/science.1256427).
@@ -717,14 +498,10 @@ The flu landscape fit and plot takes a bit
 longer to generate than the simple SARS-CoV-2 cone fit.
 
 ```{r}
-flu_landscape <- ablandscape.fit(titers = vaccine1997.titers.post,
-                                 acmap = h3_map,
-                                 method = "loess",
-                                 bandwidth = 11, # as used in the paper, written in SOM
-                                 degree = 1,
-                                 error.sd = 1.1
-                                )
+# fit the flu landscape with the "loess" method and bandwidth = 11
+flu_landscape <- ablandscape.fit()
 
+# set up the base
 flu_base <- ablandscapes:::lndscp3d_setup(
   xlim = lims$xlim,
   ylim = lims$ylim,
@@ -752,6 +529,7 @@ flu_base <- lndscp3d_map(
 
 
 ```{r, warning=FALSE}
+# plot the flu landscape
 flu_html <- plot_landscapes_from_list(flu_base, 
                                       map = h3_map,
                                       lndscp_fits = list("flu" = flu_landscape),
