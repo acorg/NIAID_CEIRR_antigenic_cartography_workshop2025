@@ -60,6 +60,7 @@ dimnames(ba2_reinf) <- dimnames(single_wu1)
 ```
 
 ```{r visualizing_multi_sera}
+
 matrix_to_long <- function(current_matrix, sr_group){
   
   as.data.frame(current_matrix) %>%
@@ -83,11 +84,16 @@ titer_long %>%
             sr_facet = "GMT") %>%
   rbind(., titer_long) -> titer_long
 
+lndscp_cols <- data.frame("Color" = c("#F87", "#00BFC4", "#C77CFF"),
+                          row.names = unique(titer_long$sr_group))
+
+
 titer_long %>%
   ggplot(aes(x = ag_name, y = logtiter, group = sr_name, color = sr_group)) + 
   geom_point() + 
   geom_line(alpha = 0.4) + 
   ylim(c(0, 9)) +
+  scale_color_manual(values = lndscp_cols$Color) + 
   scale_x_discrete(limits = agNames(single_map),
                    name = "Antigen variant") +
   facet_wrap(~sr_facet) +
@@ -386,11 +392,6 @@ set_r3js_orentation(data3js, angle)
 Plot all serum group GMT landscapes together: 
 
 ```{r}
-
-lndscp_cols <- data.frame("Color" = c("#F87", "#00BFC4", "#C77CFF"),
-                          row.names = unique(titer_long$sr_group))
-
-
 data3js_gmts <- plot_landscapes_from_list(data3js, # base object to add landscapes to
                                           lndscp_fits = lndscp_fits, # list of lndscp_fits, named with matching serum group
                                           map = single_map, # map for x,y coordinates of GMTs
