@@ -8,7 +8,9 @@ packages <- c(
   "knitr",
   "here",
   "seqinr",
-  "r3js"
+  "r3js",
+  "chromote",
+  "htmlwidgets"
 )
 
 # Install packages not yet installed
