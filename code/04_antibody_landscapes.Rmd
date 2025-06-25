@@ -26,7 +26,7 @@ For plotting html objects, we will use the r3js package: https://cran.r-project.
 
 ```{r load_packages}
 # Package names
-packages <- c("Racmacs", "knitr", "tidyverse", "ablandscapes", "r3js")
+packages <- c("Racmacs", "knitr", "tidyverse", "ablandscapes", "r3js", "chromote", "htmlwidgets")
 
 # Install packages not yet installed
 installed_packages <- packages %in% rownames(installed.packages())
@@ -138,6 +138,9 @@ magnitude, and connected through a surface, the slope of which indicates
 the cross-reactivity. The smaller the slope, the more cross-reactive the
 sample.
 
+The description above focusses on antibody neutralization, not binding.
+The landscape fitting approach remains the same, however.
+
 In the single cone landscape approached used for modelling SARS-CoV-2 immunity, cone coordinates (x,
 y) and cone heights (z) are fitted to titers per subject. The slope of
 this cone is optimised over all subjects per serum group, assuming the
@@ -146,8 +149,9 @@ indicate the breadth of neutralization titers. As immune history becomes
 more complex, for example for influenza, a single cone approach does not
 provide a good approach and a loess fit should be used (discussed later).
 
-The description above focusses on antibody neutralization, not binding.
-The landscape fitting approach remains the same, however.
+The likelihood of the parameters is evaluated based on the negative log-likelihood 
+of obtaining the measured titer from a normal distribution with mean = predicted (fitted) 
+titer and a set standard deviation.
 
 Below, we will model the three examples from above on the full SARS-CoV-2 map.
 
@@ -159,7 +163,10 @@ the change in titers per antigenic unit. Individual sera can have higher or lowe
 
 Crucial for fitting antibody landscapes is that the antigen names in the titer table and in the map are the same.
 An antigen in the titer table that is not present in the map will result in an Error message, such as: "The following antigens were not found in the map supplied:". 
-The *transposed* raw titer table, not the logtitertable, with "<LOD" titers written as "<LOD" is given as input. Titers that are not measured should be passed as "*". The column names are the antigens, the row names are the sera to be measured. The table is passed as a matrix.
+The *transposed* raw titer table, not the logtitertable, with "<LOD" titers written as "<LOD" is given as input. Titers that are not measured should be passed as "*". The column names are the antigens, the row names are the sera to be measured. The table is passed as a matrix. The `error.sd` parameter determines the standard deviation of the normal distribution used to 
+evaluate the likelihood of measuring titer x with the current parameter set. A lower `error.sd` 
+forces the fit to match the measured data, potentially resulting in overfitting. The parameter 
+should resemble the standard deviation of titer repeat measurements.
   
 
 ```{r}
@@ -541,4 +548,59 @@ flu_html <- plot_landscapes_from_list(flu_base,
 
 flu_html
 ```
+
+# Screenshotting Antibody Landscapes
+
+To screenshot html objects we will use the [`htmlwidgets`](10.32614/CRAN.package.htmlwidgets) and [`chromote` package](https://rstudio.github.io/chromote/) so you need to have 
+[Google Chrome](https://www.google.com/chrome/) installed on your computer. We will take the SARS-CoV-2 
+landscapes as example.
+
+```{r}
+target_scp <- set_r3js_orentation(data3js_gmts, angle)
+
+# need to temporarily save the landscape, create directory for it
+file_path <- file.path(here::here(), "data", "landscapes")
+dir.create(file_path)
+
+# save html landscape widget
+fig_path <- file.path(file_path, "landscape_screenshot.html")
+saveWidget(target_scp, fig_path)
+
+# open chrome session to screenshot html object
+b <- chromote::ChromoteSession$new()
+# supply path to figure
+b$Page$navigate(paste0("file://", normalizePath(fig_path, winslash = "/")))
+
+# wait before screenshot  
+Sys.sleep(0.3)
+
+# set optimum window. THIS MIGHT NEED TO BE VARIED DEPENDING ON THE SCREEN AND LANDSCAPE    
+b$set_viewport_size(width = 1400,
+                        height =1000,
+                        zoom = 1)
+    
+# set screenshot name
+file_save <- gsub(".html", ".png", fig_path)
+
+# screenshot landscape
+b$screenshot(
+      filename = file_save,
+      cliprect = c(50, 220, 1100, 600), #x, y, width, height
+      scale = 1,
+      show = FALSE,
+      wait_ = TRUE
+    )
+
+# close session    
+b$close()
+
+# remove files
+file.remove(fig_path)
+
+# remove landscape files
+unlink(gsub(".html", "_files", fig_path), recursive = TRUE)
+```
+
+
+
 

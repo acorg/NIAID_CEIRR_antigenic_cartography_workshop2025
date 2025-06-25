@@ -18,6 +18,9 @@ are linked on the R page. Here are the instructions to install the tools for Mac
 If installation issues occur, it is often because the R version and the development tools version do not match. We recommend 
 installing the most recent version of both and updating R if necessary.
 
+To screenshot antibody landscapes, we will use a package that requires installation of [Google Chrome](https://www.google.com/chrome/) 
+on your device.
+
 We also recommend installing RStudio as it provides an accessible user interface: https://posit.co/products/open-source/rstudio/
 
 Once you have both install, please open a session in RStudio and run the script `code/00_installation.R` to install all 
@@ -25,8 +28,9 @@ packages that we will be using throughout the workshop.
 
 ## During the workshop
 
-The code for each session is in the `code` directory and numbered. We will provide working code but encourage 
-participants to try each task by themselves.
+The code for each session is in the `code` directory and numbered. We will provide working code for each 
+session in the same directory with the appendix `_solution.Rmd` but encourage 
+participants to try each task by themselves first. 
 
 
 
