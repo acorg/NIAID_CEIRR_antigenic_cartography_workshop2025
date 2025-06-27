@@ -331,58 +331,71 @@ In all cases, at least 2 of the three antigens are <LOD. There is too little inf
 
 ## SARS-CoV-2 map
 
-The map we will be using going forwards, with SARS-CoV-2 variants.
+Above, we have been using quite "unrealistic" simulated data. Now, we'll produce and style a map using more a titer table which looks more like something you might produce in practice, containing a selection of SARS-CoV-2 variants. We'll also use this map later on in the map diagnostics session.
 
-Read the titer table
+Read in the titer table, `data/01_sars_cov_2_titerdata.csv`":
 ```{r}
-titers = read.csv("../data/01_sars_cov_2_titerdata.csv", row.names = 1)
+
 ```
 
-Make the map.
-```{r}
-sars_cov_2_map = Racmacs::acmap(titer_table = titers) %>%
-  Racmacs::optimizeMap(
-    number_of_dimensions = 2,
-    number_of_optimizations = 1000
-  )
 
-plot(sars_cov_2_map, plot_labels = "antigens")
+Optimize the map using 2 dimensions, and 1000 optimizations, as you did above.
+```{r}
+
 ```
 
-Set styling.
+
+Have a first look at the un-styled map:
 ```{r}
-antigen_colors = readRDS("../data/01_sars_cov_2_antigen_colors.RDS")
-Racmacs::agFill(sars_cov_2_map) = antigen_colors[agNames(sars_cov_2_map)]
-Racmacs::srOpacity(sars_cov_2_map) = 0.4
+
 ```
 
-Rotate & reflect.
+There are a couple of things we need to do to make this map "prettier":
+
+1. Set the fill color of the antigens, using the colors provided in `data/01_sars_cov_2_antigen_colors.RDS`:
 ```{r}
-plot(sars_cov_2_map, plot_labels = "antigens")
-plot(rotateMap(sars_cov_2_map, 60), plot_labels = "antigens")
-plot(reflectMap(sars_cov_2_map), plot_labels = "antigens")
+
 ```
 
-Rotate & reflect correctly
+2. Make the sera less visually dominant by setting their opacity to 0.4:
 ```{r}
-source("helpful_functions/rotateMapCorrectly.R")
-sars_cov_2_map_oriented = rotateMapCorrectly(sars_cov_2_map)
 
-plot(sars_cov_2_map_oriented, plot_labels = "antigens")
 ```
 
-Add sequences
+
+3. The map is looking quite nice now. But the orientation — i.e. reflection and rotation — are random (can you think why this is?). It would be nice if we could orient our map in a consistent way. Let's rotate and reflect the map (look for the relevant functions in Racmacs!) to roughly match [Fig. 2 of Roessler, Netzl et al. 2023](https://www.nature.com/articles/s41467-023-41049-4/figures/2) — that is, with Wu-1 on the left, XBB.1.5 on the right, and BA.2 beneath BA.5:
 
 ```{r}
-dna_sequences_read = seqinr::read.fasta(file = "../data/01_spike_sequences.fasta")
-  
-aa_sequences_read = dna_sequences_read %>%
-  map(seqinr::translate) %>%
-  do.call(what = rbind) %>%
-  toupper()
 
-Racmacs::agSequences(sars_cov_2_map) = aa_sequences_read[agNames(sars_cov_2_map),]
+```
 
-Racmacs::view.acmap(sars_cov_2_map)
+NB: We've also provided a function `rotateMapCorrectly` in the file `helpful_functions/rotateMapCorrectly.R` which will automatically produce the matched orintation; `source` it and try it out:
+```{r}
+
+```
+
+### Adding sequences to a map
+
+We can use the coloring to plot useful information on the map, allowing us to see see how antigenic position correlates with a variable of interest.
+
+Commonly, that variable is the amino acid at (a) position(s) of interest. Let's add the spike amino acid sequences to our SARS-CoV-2 map, and color the map by sequence.
+
+(The `seqinr` package has functions for reading and translating sequences.)
+
+Read in the aligned spike nucleotide sequences from `../data/01_spike_sequences.fasta`:
+```{r}
+
+```
+
+
+Translate them to amino acids, and add the sequences to the map (make sure the amino acid sequences are in the correct format!):
+```{r}
+
+```
+
+
+Rather than setting agFill like before, we can use `Racmacs::view` to color the map by any amino acid position, or combination of positions (navigate to control panel > coloring > sequence). Some suggestions to try are 452 & 484:
+```{r}
+
 ```
 
