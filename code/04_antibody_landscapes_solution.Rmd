@@ -39,7 +39,7 @@ theme_set(theme_bw() +
 
 
 ```{r ag_maps}
-single_map <- read.acmap(filename = file.path(here::here(), "data", "maps", "01_sars_cov_2_map.ace"))
+single_map <- read.acmap(filename = here::here("data", "maps", "01_sars_cov_2_map.ace"))
 
 ```
 
@@ -379,7 +379,7 @@ r3js::r3js(
 We packed all of the above in functions in the `code/helpful_functions/antibody_landscapes_functions.R` script, including options to style and label the base map, and plot individual serum antibody landscapes.
 
 ```{r}
-source(file.path(here::here(), "code", "helpful_functions", "antibody_landscapes_functions.R"))
+source(here::here("code", "helpful_functions", "antibody_landscapes_functions.R"))
 
 # plot the base map
 data3js <-base_plot_data3js(map = single_map, 
@@ -787,7 +787,7 @@ landscapes as example.
 target_scp <- set_r3js_orentation(data3js_gmts, angle)
 
 # need to temporarily save the landscape, create directory for it
-file_path <- file.path(here::here(), "data", "landscapes")
+file_path <- here::here("data", "landscapes")
 dir.create(file_path)
 
 # save html landscape widget

@@ -165,14 +165,30 @@ rm(list = ls())
 
 titers = read.csv("../../data/01_sars_cov_2_titerdata.csv", row.names = 1)
 
-reconstructed_map = Racmacs::acmap(titer_table = titers) %>%
-  Racmacs::optimizeMap(
-    number_of_dimensions = 2,
-    number_of_optimizations = 1000
-  )
+reconstructed_map = Racmacs::acmap(titer_table = titers)
 
 antigen_colors = readRDS("../../data/01_sars_cov_2_antigen_colors.RDS")
-
 Racmacs::agFill(reconstructed_map) = antigen_colors[agNames(reconstructed_map)]
 Racmacs::srOpacity(reconstructed_map) = 0.4
 
+reconstructed_map_op = Racmacs::optimizeMap(
+  reconstructed_map,
+  number_of_dimensions = 2,
+  number_of_optimizations = 1000
+)
+
+source(here::here("code", "helpful_functions", "rotateMapCorrectly.R"))
+reconstructed_map_op_rot = rotateMapCorrectly(reconstructed_map_op)
+
+# save rotated and optimised map for ab landscapes session
+Racmacs::save.acmap(
+  reconstructed_map_op_rot,
+  here::here("data", "maps", "01_sars_cov_2_map.ace")
+)
+
+
+# save non-optimised map for diagnostics session
+Racmacs::save.acmap(
+  reconstructed_map,
+  here::here("data", "maps", "01_sars_cov_2_map_not_optimised.ace")
+)
