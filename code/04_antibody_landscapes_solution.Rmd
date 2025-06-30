@@ -105,6 +105,9 @@ Making maps from multi-exposure sera comes with multiple difficulties. **Most im
 A map from multiple exposures shows immune escape in these specific sera, therefore, distinct exposure histories should not be combined as they likely have different immune escape patterns. To illustrate the effect of multiple exposure cross-reactivity on an antigenic map, we construct maps for each of the serum groups shown above:
 
 ```{r}
+# set seed for reproducible result
+set.seed(666)
+
 wu1_single_map <- make.acmap(apply(single_wu1, 1:2, function(x)2^x*10))
 delta_bt_map <- make.acmap(apply(delta_bt, 1:2, function(x)2^x*10))
 ba2_reinf_map <- make.acmap(apply(ba2_reinf, 1:2, function(x)2^x*10))

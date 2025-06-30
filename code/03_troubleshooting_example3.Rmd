@@ -1,0 +1,48 @@
+---
+title: "03 Troubleshooting example 3"
+author: "Antonia Netzl"
+date: "2025-06-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls()) # clear environment at the beginning of each session
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.width=8, fig.height=6,
+                      fig.align = "center")
+```
+
+## Troubleshooting example 3
+
+This is an example based that was previously published in [Rössler, et al. Cell Reports (2025)](https://doi.org/10.1016/j.celrep.2024.115140.) .
+
+
+```{r load_packages, echo=FALSE}
+# Package names
+packages <- c("Racmacs", "knitr", "tidyverse")
+
+# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+
+invisible(lapply(packages, library, character.only = TRUE))
+
+#set ggplot2 theme
+theme_set(theme_bw() + 
+            theme(strip.background.x = element_blank(),
+                  axis.text.x = element_text(angle = 45, hjust = 1)))
+
+```
+
+Load the map from `data/maps/03_troubleshooting_map3.ace` . The original map by Rössler, et al., can be downloaded [here](https://github.com/acorg/roessler_netzl_et_al2024/blob/main/data/maps/map_threshold20_all_ags_singleTP_woXBBBQ11conv_woXBB15conv_alpha_adj.ace). 
+
+Explore the map with the tools from the workshop and see what you can find. You can go to `code/03_troubleshooting_example3.Rmd` for hints and one example 
+analysis pathway.
+
+Have fun!
+
+```{r}
+
+```

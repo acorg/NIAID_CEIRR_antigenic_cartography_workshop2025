@@ -384,7 +384,7 @@ We can look at the effect of <LOD on titer error in the Racmacs' Viewer, by sele
 RacViewer(map_noisy)
 ```
 
-What do you think contributes to the map stress, i.e. error between titer distances and map distances? Is it the serum reactivity or the measurement noise? You can find out by simulating data with either effect.
+What do you think contributes to the map stress, i.e. error between titer distances and map distances? Is it the serum reactivity or the measurement noise? You can find out by simulating data with either effect. The viewer shows the total map stress, followed by the stress per titer and in square brackets the stress per detectable titer.
 
 
 ## Map comparison

@@ -1,0 +1,200 @@
+---
+title: "03 Troubleshooting example 3"
+author: "Antonia Netzl"
+date: "2025-06-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls()) # clear environment at the beginning of each session
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.width=8, fig.height=6,
+                      fig.align = "center")
+```
+
+## Troubleshooting example 3
+
+This is an example based that was previously published in [Rössler, et al. Cell Reports (2025)](https://doi.org/10.1016/j.celrep.2024.115140.) .
+
+
+```{r load_packages, echo=FALSE}
+# Package names
+packages <- c("Racmacs", "knitr", "tidyverse")
+
+# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+
+invisible(lapply(packages, library, character.only = TRUE))
+
+#set ggplot2 theme
+theme_set(theme_bw() + 
+            theme(strip.background.x = element_blank(),
+                  axis.text.x = element_text(angle = 45, hjust = 1)))
+
+```
+
+Load the map from `data/maps/03_troubleshooting_map3.ace` . The original map by Rössler, et al., can be downloaded [here](https://github.com/acorg/roessler_netzl_et_al2024/blob/main/data/maps/map_threshold20_all_ags_singleTP_woXBBBQ11conv_woXBB15conv_alpha_adj.ace). 
+
+```{r read_map}
+# read in example map
+map <- read.acmap(file.path(here::here(), "data/maps/03_troubleshooting_map3.ace"))
+plot(map, 
+     plot_stress = TRUE,
+     plot_labels = "antigens")
+```
+
+A first inspection does not reveal an immediate issue. Additional background knowledge helps in judging that the map does not represent the real world 
+evolution of SARS-CoV-2: BA.2.75 subvariants CH.1.1 and DV.7.1 escape single exposure sera to a similar degree as JN.1 subvariants KP.2, KP.3 and KZ.1.1. 
+
+Additional diagnostic steps are necessary to make sense of the current conformation. Let's look at the difference between optimizations (Procrustes 
+arrow root mean square deviation RMSD) and map stress:
+
+```{r optimization_procrustes_vs_map_stress}
+ams <- allMapStresses(map)
+pc_rmsd <- rep(NA, numOptimizations(map))
+for (i in 1:numOptimizations(map)){
+  # procrustesData from optimization 1 to other optima
+  pc_output <- procrustesData(map, map, 1, i)
+  pc_rmsd[i] <- pc_output$total_rmsd
+}
+
+plot(ams, pc_rmsd, xlab = "All Map optimization stresses", ylab = "Procrustes arrow length RMSD")
+
+```
+
+At only marginally higher stress, we see a jump of RMSD, indicating map metastability. Let's look at optimizations that differ only slightly 
+from the top optimizations regarding all map stress (884 vs. 891 vs. 897):
+
+```{r}
+target_optim <- c(1:numOptimizations(map))[allMapStresses(map) > 890][1]
+target_optim2 <- c(1:numOptimizations(map))[allMapStresses(map) > 897][1]
+```
+
+```{r, fig.show='hold',fig.align='center'}
+plot(map, optimization_number = 1, 
+       plot_blobs = FALSE,
+     plot_stress = TRUE)
+plot(map, optimization_number = target_optim, 
+       plot_blobs = FALSE,
+     plot_stress = TRUE)
+plot(map, optimization_number = target_optim2, 
+       plot_blobs = FALSE,
+     plot_stress = TRUE)
+```
+
+This shows that with only 13 points added total map stress, there is a different map conformation that shows the immune escape of JN.1 variants as expected from their escape in human multi-exposure sera. 
+
+Comparing the antigen stress per titer for >LOD titers shows an overall comparable stress per antigen, with the optimization number 130 having slightly
+lower mean stress when excluding non detectable titers. 
+
+```{r}
+ag_stress_per_titer <- lapply(c(1, target_optim2), function(x){
+  
+  as.data.frame(agStressPerTiter(map, optimization_number = x)) %>%
+    rownames_to_column(var = "ag_name") %>%
+    mutate(optim_number = x)
+  
+})
+
+ag_stress_per_titer <- do.call(rbind, ag_stress_per_titer)
+
+ag_order <- ag_stress_per_titer %>%
+  filter(optim_number == 1) %>%
+  arrange(nd_excluded) %>%
+  pull(ag_name)
+
+ag_stress_per_titer %>%
+  group_by(optim_number) %>%
+  summarize(mean_nd_included = mean(nd_included),
+            mean_nd_excluded = mean(nd_excluded))
+
+ag_stress_per_titer %>%
+  ggplot(aes(x = ag_name, y = nd_excluded, color = as.factor(optim_number), group = as.factor(optim_number))) + 
+  geom_point(position = position_dodge(width = 0.4)) + 
+  geom_line(position = position_dodge(width = 0.4)) + 
+  scale_x_discrete(limits = rev(ag_order)) + 
+  ylab("Ag stress per titer, <LOD excluded") -> p2
+
+p2
+```
+
+We see the same pattern when looking at Serum stress per titer:
+
+```{r}
+sr_stress_per_titer <- lapply(c(1, target_optim2), function(x){
+  
+  as.data.frame(srStressPerTiter(map, optimization_number = x)) %>%
+    rownames_to_column(var = "sr_name") %>%
+    mutate(optim_number = x)
+  
+})
+
+sr_stress_per_titer <- do.call(rbind, sr_stress_per_titer)
+
+sr_stress_per_titer %>%
+  group_by(optim_number) %>%
+  summarize(mean_nd_included = mean(nd_included, na.rm = TRUE),
+            mean_nd_excluded = mean(nd_excluded, na.rm = TRUE))
+
+```
+
+So where do these two optima that, numerically, present the data equally well come from, but lead to distinct conclusions regarding antigenic relationships?
+
+Potentially, both conformations are present in 3 dimensions and it is an effect of projecting a 3D map downwards onto the 2D plane:
+
+```{r}
+set.seed(100)
+map3d <- optimizeMap(map, 3, 1000,
+                     options = list(ignore_disconnected = TRUE, dim_annealing = TRUE))
+
+```
+```{r}
+agSize(map3d) <- 4
+srSize(map3d) <- 2
+RacViewer(map3d)
+```
+
+
+Indeed, Rotation 0, 0, 0 gives optimum number 130, Rotation 2.36, 0.20, -0.15 gives optimum number 1. 
+
+
+We understand now that the two similar optima are due to downardsprojection of the 3D map onto 2 dimensions. Both local map optima are present in 
+higher dimensions. Optimization number 1 has overall lower map stress, but when excluding <LOD titers optimization 130 has lower stress per titer. 
+Optimization 130 also shows antigenic relationships that are more in line with what we know from immune escape in multi-exposure sera. 
+
+How do we resolve the conflict in the data to obtain a stable map that represents antigenic relationships?
+
+In the Ag stress per titer plot, we see that CH.1.1 and BA.2 have much higher stress in optimization 130 than 1. We can make maps without either of 
+them and see if that decreases the map stress and resolves the optimum:
+
+Remove BA.2:
+```{r}
+map_no_ba.2 <- removeAntigens(map, "BA.2")
+map_no_ba.2 <- optimizeMap(map_no_ba.2, 2, 1000, options = list(ignore_disconnected = TRUE, dim_annealing = TRUE))
+
+
+plot(realignMap(map_no_ba.2, map),
+     plot_stress = TRUE)
+```
+
+BA.2 removal reduces map stress and gives the other optimum.
+
+```{r}
+
+map_no_ch11 <- removeAntigens(map, "CH.1.1")
+map_no_ch11 <- optimizeMap(map_no_ch11, 2, 1000, options = list(ignore_disconnected = TRUE, dim_annealing = TRUE))
+
+plot(realignMap(map_no_ch11, map),
+     plot_stress = TRUE)
+```
+
+The same is true for removing CH.1.1. 
+
+We know now that these two antigens have a comparable impact on map conformation. The antigen stress per titer is higher for CH.1.1 than for 
+BA.2, suggesting that removing CH.1.1 is the more reasonable choice, as done in the original publication.
+
+Stability analysis should be repeated with the subset map.
+
