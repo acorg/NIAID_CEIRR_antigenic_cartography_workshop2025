@@ -52,6 +52,11 @@ Multiple exposures are known to increase cross-reactivity. We here simulate the 
 single_wu1 <- logtiterTable(single_map)[,grepl("Wu1", colnames(titerTable(single_map)))]
 single_table_dist <- tableDistances(single_map)[,grepl("Wu1", colnames(titerTable(single_map)))]
 
+# substitute >4 table dists
+single_table_dist <- apply(single_table_dist, 1:2, function(x){
+  as.numeric(gsub(">", "", x))
+})
+
 delta_bt <- abs(sweep(0.8*apply(single_table_dist, c(1,2), as.numeric), MARGIN = 2, single_wu1[1,c(1:3)], `-`))
 dimnames(delta_bt) <- dimnames(single_wu1)
 
@@ -91,6 +96,7 @@ lndscp_cols <- data.frame("Color" = c("#F87", "#00BFC4", "#C77CFF"),
 titer_long %>%
   ggplot(aes(x = ag_name, y = logtiter, group = sr_name, color = sr_group)) + 
   geom_point() + 
+  geom_hline(yintercept = log2(40/10), linetype = "dashed") +
   geom_line(alpha = 0.4) + 
   ylim(c(0, 9)) +
   scale_color_manual(values = lndscp_cols$Color) + 
@@ -547,7 +553,7 @@ idvl_residuals %>%
                    name = "Antigen variant") +
   facet_wrap(~sr_group) +
   scale_y_continuous(labels = function(x) paste0(round(2^x, 2), "x"),
-                     limits = c(-0.75, 0.75),
+                     #limits = c(-0.75, 0.75),
                      name = "Titer Residuals") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
@@ -657,6 +663,7 @@ comp_data %>%
   scale_x_discrete(limits = agNames(single_map),
                    name = "Antigen variant") +
   facet_wrap(~sr_group) +
+  ylim(c(0, 7.5)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 

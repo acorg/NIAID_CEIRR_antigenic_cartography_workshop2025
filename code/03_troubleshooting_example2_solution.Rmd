@@ -64,7 +64,7 @@ as.data.frame(logtable) %>%
 
 # add grouping information
 data_long$sr_group <- sapply(data_long$sr_name, function(x){
-  temp_split <- strsplit(x, "\\.")[[1]]
+  temp_split <- strsplit(x, "\\_")[[1]]
   paste(temp_split[1:(length(temp_split)-1)], collapse = ".")
 })
 
@@ -90,7 +90,7 @@ We don't have additional information there. But we know that multi-exposure sera
 To do that, we start by colouring based on serum group:
 
 ```{r}
-ag_colors <- readRDS(file.path(here::here(), "data", "01_sars_cov_2_antigen_colors.RDS"))
+ag_colors <- readRDS(file.path(here::here(), "data", "other", "01_sars_cov_2_antigen_colors.RDS"))
 agFill(map) <- ag_colors[agNames(map)]
 
 # add sr colors for serum groups that are not in ag_colors
@@ -100,7 +100,7 @@ as.character(unique(srGroups(map)))[!unique(srGroups(map)) %in% names(ag_colors)
 We will set their color to red and blue so that they stick out:
 
 ```{r}
-ag_colors[c("Unknown 1", "Unknown 2")] <- c("#ff0000", "#0000ff")
+ag_colors[c("Unknown 1", "Unknown 2", "Unknown 3")] <- c("#ff0000", "#0000ff", "green")
 
 srOutline(map) <- ag_colors[as.character(srGroups(map))]
 plot(map,
@@ -184,7 +184,7 @@ as.data.frame(logtable) %>%
 
 # add grouping information
 data_long$sr_group <- sapply(data_long$sr_name, function(x){
-  temp_split <- strsplit(x, "\\.")[[1]]
+  temp_split <- strsplit(x, "\\_")[[1]]
   paste(temp_split[1:(length(temp_split)-1)], collapse = ".")
 })
 
@@ -219,13 +219,13 @@ seemingly high cross-reactivity is, however, different. The impact of including 
 can be similar:
 
 ```{r}
-ag_colors <- readRDS(file.path(here::here(), "data", "01_sars_cov_2_antigen_colors.RDS"))
+ag_colors <- readRDS(file.path(here::here(), "data", "other", "01_sars_cov_2_antigen_colors.RDS"))
 agFill(map) <- ag_colors[agNames(map)]
 
 # add sr colors for serum groups that are not in ag_colors
 as.character(unique(srGroups(map)))[!unique(srGroups(map)) %in% names(ag_colors)]
 
-ag_colors[c("Wu-1 Day 4", "BA.2 Day 4", "JN.1 Day 4")] <- c("#ff0000", "#0000ff", "green")
+ag_colors[c("Wu1 Day 4", "BA.2 Day 4", "JN.1 Day 4")] <- c("#ff0000", "#0000ff", "green")
 
 srOutline(map) <- ag_colors[as.character(srGroups(map))]
 
@@ -252,7 +252,7 @@ plot(procrustesMap(map_clean, map), plot_stress = TRUE,
 ```
 
 We see that the map stress is much reduced after removing the early sampled sera. They had little effect on serum 
-positioning, but we see that JN.1 and B.1.621 were pulled towards the center of the map.
+positioning, but we see thow they pull antigens towards the center of the map.
 
 
 
