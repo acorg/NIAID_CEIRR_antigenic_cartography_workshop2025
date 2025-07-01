@@ -1,0 +1,258 @@
+---
+title: "Troubleshooting example 2"
+author: "Antonia Netzl"
+date: "2025-07-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls()) # clear environment at the beginning of each session
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.width=8, fig.height=6,
+                      fig.align = "center")
+```
+
+```{r load_packages, echo=FALSE}
+# Package names
+packages <- c("Racmacs", "tidyverse")
+
+# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+
+invisible(lapply(packages, library, character.only = TRUE))
+
+#set ggplot2 theme
+theme_set(theme_bw() + 
+            theme(strip.background.x = element_blank(),
+                  axis.text.x = element_text(angle = 45, hjust = 1)))
+```
+
+## Troubleshooting example 2
+
+This example contains two maps, example map 2a and example map 2b. We will start with example 2a.
+
+### Troubleshooting example 2a
+
+Load the map from `data/maps/03_troubleshooting_map2a.ace`:
+
+```{r}
+map <- read.acmap(file.path(here::here(), "data", "maps", "03_troubleshooting_map2a.ace"))
+
+plot(map, plot_stress = TRUE,
+     plot_labels = "antigens",
+     label.offset = 0.5)
+```
+
+We have a SARS-CoV-2 map. To better make sense of it, we will look at the included sera:
+
+```{r}
+srNames(map)
+```
+We see that a few sera's exposure history is unknown.
+
+Let's plot the titers by exposure history:
+
+```{r}
+logtable <- logtiterTable(map)
+
+as.data.frame(logtable) %>%
+  rownames_to_column(var = "ag_name") %>%
+  pivot_longer(cols = colnames(logtable), names_to = "sr_name", values_to = "logtiter") -> data_long
+
+# add grouping information
+data_long$sr_group <- sapply(data_long$sr_name, function(x){
+  temp_split <- strsplit(x, "\\_")[[1]]
+  paste(temp_split[1:(length(temp_split)-1)], collapse = ".")
+})
+
+
+data_long %>%
+  ggplot(aes(x = ag_name, y = logtiter, group = sr_name, color = sr_group)) + 
+  geom_line() + 
+  facet_wrap(~sr_group) + 
+  ylim(c(0, 11)) +
+  scale_x_discrete(limits = agNames(map))
+```
+
+The known sera have highest titers against heir infecting variant. The unknown sera have higher titers and show much broader cross-neutralization than the other sera. Such patterns are known after multiple exposures.
+
+Let's check if there is more information in the serum groups field:
+
+```{r}
+srGroups(map)
+```
+
+We don't have additional information there. But we know that multi-exposure sera have higher cross-reactivity compared to single exposure sera and therefore decrease antigenic distances in a map. Hence, they should be removed from the map. Let's check the impact of the unknown sera on the map configuration and map stress. 
+
+To do that, we start by colouring based on serum group:
+
+```{r}
+ag_colors <- readRDS(file.path(here::here(), "data", "other", "01_sars_cov_2_antigen_colors.RDS"))
+agFill(map) <- ag_colors[agNames(map)]
+
+# add sr colors for serum groups that are not in ag_colors
+as.character(unique(srGroups(map)))[!unique(srGroups(map)) %in% names(ag_colors)]
+```
+
+We will set their color to red and blue so that they stick out:
+
+```{r}
+ag_colors[c("Unknown 1", "Unknown 2", "Unknown 3")] <- c("#ff0000", "#0000ff", "green")
+
+srOutline(map) <- ag_colors[as.character(srGroups(map))]
+plot(map,
+     plot_stress = TRUE)
+```
+
+The single exposure sera colocalise with their homologous variant, but the unknown sera are in the center of the map due to 
+their high cross-reactivity. Let's compare error lines and serum stress:
+
+```{r}
+plot(map,
+     plot_stress = TRUE,
+     show_error_lines = TRUE)
+```
+
+The error lines show that the central sera unknown sera pull all variants closer to the middle.
+
+```{r}
+# color sera by stress:
+map_stresses <- data.frame(stress = srStress(map),
+                           serum = srNames(map),
+                           sr_number = 1:numSera(map))
+
+map_stresses %>%
+  ggplot(aes(x = sr_number, y = stress, color = stress)) + 
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red") -> p
+
+color_stress_data <- layer_data(p)
+
+srFill(map) <- color_stress_data$colour
+plot(map,
+     plot_stress = TRUE,
+     show_error_lines = FALSE)
+```
+
+Colouring by stress also shows that these sera are the most stressed in the map. It is time to remove them:
+
+```{r}
+srFill(map) <- "transparent"
+map_clean <- removeSera(map, srNames(map)[grepl("Unknown", srGroups(map))])
+map_clean <- optimizeMap(map_clean, 2, 100)
+map_clean <- realignMap(map_clean, map)
+
+plot(procrustesMap(map_clean, map), plot_stress = TRUE)
+```
+
+
+The plot above shows the map without the unknown sera, with arrows pointing to the item's position in the map including them. We see that the serum positions don't really change, but that antigens got pulled into the center by the highly cross-reactive sera. All analyses indicate that these sera come from individuals that had more than one exposure. Creating a map from including multiple exposure sera condenses the map and decreases antigenic 
+distances between variants. Such sera should be removed from antigenic maps with the purpose of representing basic 
+antigenic relationships.
+
+### Troubleshooting example 2b
+
+Load the map from `data/maps/03_troubleshooting_map2b.ace`:
+
+```{r}
+map <- read.acmap(file.path(here::here(), "data", "maps", "03_troubleshooting_map2b.ace"))
+
+plot(map, plot_stress = TRUE,
+     plot_labels = "antigens",
+     label.offset = 0.5)
+```
+
+At a first glance, the map looks similar to the example map 2a. Let's follow the same approach. 
+
+First, look at which sera are included in the map making:
+
+```{r}
+srNames(map)
+```
+
+This time, it all looks like single exposure sera, but some have a sampling day information. Let's look at the titers:
+
+```{r}
+logtable <- logtiterTable(map)
+
+as.data.frame(logtable) %>%
+  rownames_to_column(var = "ag_name") %>%
+  pivot_longer(cols = colnames(logtable), names_to = "sr_name", values_to = "logtiter") -> data_long
+
+# add grouping information
+data_long$sr_group <- sapply(data_long$sr_name, function(x){
+  temp_split <- strsplit(x, "\\_")[[1]]
+  paste(temp_split[1:(length(temp_split)-1)], collapse = ".")
+})
+
+
+data_long %>%
+  ggplot(aes(x = ag_name, y = logtiter, group = sr_name, color = sr_group)) + 
+  geom_line() + 
+  facet_wrap(~sr_group) + 
+  ylim(c(0, 11)) +
+  scale_x_discrete(limits = agNames(map))
+```
+The early sampled sera have much lower and more variable titers than the other sera. Let's see how many are close to the limit of detection of 40 (marked by the black dashed line):
+
+```{r}
+lod <- as.numeric(gsub("<", "", titerTable(map)[grepl("<", titerTable(map))][1]))
+
+data_long %>%
+  ggplot(aes(x = ag_name, y = logtiter, group = sr_name, color = sr_group)) + 
+  geom_line() + 
+  geom_hline(yintercept = log2(lod/10), linetype = "dashed") +
+  facet_wrap(~sr_group) + 
+  ylim(c(0, 11)) +
+  scale_x_discrete(limits = agNames(map))
+```
+
+Most of the Day 4 sera are <LOD against the majority of variants, some don't have highest titers against their homologous variant (Wu.1 Day 4). Such patterns can occur when the antibody response did not have enough time 
+to mature before sampling. Titers close to the limit of detection can be above or below the LOD due to 
+measurement noise. 
+
+These early sampled sera have low fold changes and in that resemble multi-exposure sera. The reason for this 
+seemingly high cross-reactivity is, however, different. The impact of including such sera in an antigenic map 
+can be similar:
+
+```{r}
+ag_colors <- readRDS(file.path(here::here(), "data", "other", "01_sars_cov_2_antigen_colors.RDS"))
+agFill(map) <- ag_colors[agNames(map)]
+
+# add sr colors for serum groups that are not in ag_colors
+as.character(unique(srGroups(map)))[!unique(srGroups(map)) %in% names(ag_colors)]
+
+ag_colors[c("Wu1 Day 4", "BA.2 Day 4", "JN.1 Day 4")] <- c("#ff0000", "#0000ff", "green")
+
+srOutline(map) <- ag_colors[as.character(srGroups(map))]
+
+```
+
+```{r}
+plot(map,
+     plot_stress = TRUE)
+```
+
+We see that most of the early sera are central in the map, but that the random noise also results in positions far off, and not co-localised with their homologous sera or the other sera from their serum group. 
+
+Let's remove them:
+```{r}
+map_clean <- removeSera(map, srNames(map)[grepl("Day 4", srGroups(map))])
+map_clean <- optimizeMap(map_clean, 2, 100)
+map_clean <- realignMap(map_clean, map)
+```
+
+```{r}
+plot(procrustesMap(map_clean, map), plot_stress = TRUE,
+     plot_labels = "antigens", 
+     label.offset = 1)
+```
+
+We see that the map stress is much reduced after removing the early sampled sera. They had little effect on serum 
+positioning, but we see thow they pull antigens towards the center of the map.
+
+
+
