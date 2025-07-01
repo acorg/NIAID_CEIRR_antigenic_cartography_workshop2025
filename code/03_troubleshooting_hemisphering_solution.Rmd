@@ -1,7 +1,7 @@
 ---
 title: "03 Throubleshooting - Hemisphering"
 author: "Sina Tureli (st757@cam.ac.uk)"
-date: '2025-06-18'
+date: '2025-07-01'
 output:
   html_document: default
   pdf_document: default
@@ -49,7 +49,7 @@ Exercise1: Load the lab1 table, make a map, inspect it visually and
 color it according to what you visually think the clusters are.
 
 ```{r solution1}
-lab1_titerdata <- read.csv("../data/03_hemisphering_lab1.csv", row.names = "X")
+lab1_titerdata <- read.csv("../data/titerdata/03_hemisphering_lab1.csv", row.names = "X")
 lab1_map <- make.acmap(lab1_titerdata,
                        ag_names = rownames(lab1_titerdata),
                        sr_names = colnames(lab1_titerdata),
@@ -84,7 +84,7 @@ Exercise2: Load the lab 2 table, make a map, apply the orientation and
 styling of map1 and compare it via procrustes.
 
 ```{r solution2}
-lab2_titerdata <- read.csv("../data/03_hemisphering_lab2.csv", row.names = "X")
+lab2_titerdata <- read.csv("../data/titerdata/03_hemisphering_lab2.csv", row.names = "X")
 lab2_map <- make.acmap(lab2_titerdata,
                        ag_names = rownames(lab2_titerdata),
                        sr_names = colnames(lab2_titerdata),
@@ -128,7 +128,7 @@ Exercise3: Load the lab 2 table, make a map, apply the styling of map1
 and compare via procrustes.
 
 ```{r solution3}
-lab2_titerdata_repeat <- read.csv("../data/03_hemisphering_lab2_repeat.csv", 
+lab2_titerdata_repeat <- read.csv("../data/titerdata/03_hemisphering_lab2_repeat.csv", 
                                   row.names = "X")
 lab2_map_repeat <- make.acmap(lab2_titerdata_repeat,
                               ag_names = rownames(lab2_titerdata_repeat),
