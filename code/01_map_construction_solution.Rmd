@@ -56,11 +56,11 @@ theme_set(theme_bw() +
 
 We will be working with artificial titer data. 
 
-Load the data from `data/01_artificial_titerdata.csv`:
+Load the data from `data/titerdata/01_artificial_titerdata.csv`:
 
 
 ```{r load_data}
-titerdata <- read.csv("../data/01_artificial_titerdata.csv", row.names = "X")
+titerdata <- read.csv("../data/titerdata/01_artificial_titerdata.csv", row.names = "X")
 ```
 
 Let's look at the format of the titer data:
@@ -443,9 +443,9 @@ In all cases, at least 2 of the three antigens are <LOD. There is too little inf
 
 Above, we have been using quite "unrealistic" simulated data. Now, we'll produce and style a map using more a titer table which looks more like something you might produce in practice, containing a selection of SARS-CoV-2 variants. We'll also use this map later on in the map diagnostics session.
 
-Read in the titer table, `data/01_sars_cov_2_titerdata.csv`":
+Read in the titer table, `data/titerdata/01_sars_cov_2_titerdata.csv`":
 ```{r}
-titers = read.csv("../data/01_sars_cov_2_titerdata.csv", row.names = 1)
+titers = read.csv("../data/titerdata/01_sars_cov_2_titerdata.csv", row.names = 1)
 ```
 
 
@@ -466,9 +466,9 @@ plot(sars_cov_2_map, plot_labels = "antigens")
 
 There are a couple of things we need to do to make this map "prettier":
 
-1. Set the fill color of the antigens, using the colors provided in `data/01_sars_cov_2_antigen_colors.RDS`:
+1. Set the fill color of the antigens, using the colors provided in `data/other/01_sars_cov_2_antigen_colors.RDS`:
 ```{r}
-antigen_colors = readRDS("../data/01_sars_cov_2_antigen_colors.RDS")
+antigen_colors = readRDS("../data/other/01_sars_cov_2_antigen_colors.RDS")
 Racmacs::agFill(sars_cov_2_map) = antigen_colors[Racmacs::agNames(sars_cov_2_map)]
 ```
 
@@ -502,9 +502,9 @@ Commonly, that variable is the amino acid at (a) position(s) of interest. Let's 
 
 (The `seqinr` package has functions for reading and translating sequences.)
 
-Read in the aligned spike nucleotide sequences from `../data/01_spike_sequences.fasta`:
+Read in the aligned spike nucleotide sequences from `../data/other/01_spike_sequences.fasta`:
 ```{r}
-dna_sequences_read = seqinr::read.fasta(file = "../data/01_spike_sequences.fasta")
+dna_sequences_read = seqinr::read.fasta(file = "../data/other/01_spike_sequences.fasta")
 ```
 
 
