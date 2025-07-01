@@ -100,7 +100,7 @@ view(pc,  options=list(xlim=c(-8,8), ylim=c(-8,8)))
 ```
 
 Well shoot. Something is definitely wrong. This lab's data is predicting
-that majority of the yellow cluster and purple cluster is actually
+that majority of the orange cluster and purple cluster is actually
 similar to each other, unlike lab1's data which suggested they were
 different. What is going on? Did one of the labs mess up the titers for
 orange cluster somehow? Given that in the first map the orange antigens
@@ -112,7 +112,7 @@ problem fiddling around with the neurons in your brain...
 Monday comes and not having had any opportunity to do computational
 experiments with the data, Mappe hasn't really come up with a very
 satisfying explanation and against better judgement decides to ask one
-of the labs to repeat the yellow antigens' whole titration set (never do
+of the labs to repeat the orange antigens' whole titration set (never do
 this in real life!). The map1 looked very nice and lab1 works very
 carefully. There is a strong (unjustified) prior for asking the second
 lab to titrate the data and so does Mappe. They rightfully complain but
