@@ -40,7 +40,7 @@ fifteen belong in cluster one and one belongs in cluster two. Lets load the tite
 table, and make the ground truth map out of it (full_map).
 
 ```{r}
-full_titerdata <- read.csv("../data/03_colbases_fulltable.csv", row.names = "X")
+full_titerdata <- read.csv("../data/titerdata/03_colbases_fulltable.csv", row.names = "X")
 full_map <- make.acmap(full_titerdata,
                        ag_names = rownames(full_titerdata),
                        sr_names = colnames(full_titerdata),
@@ -81,7 +81,7 @@ the myster serum's homologous antigen (C2_Ag3) in the map. Lets load this table
 make a map from this:
 
 ```{r}
-partial_titerdata <- read.csv("../data/03_colbases_partialtable.csv", row.names = "X")
+partial_titerdata <- read.csv("../data/titerdata/03_colbases_partialtable.csv", row.names = "X")
 partial_map <- make.acmap(partial_titerdata,
                           ag_names = rownames(partial_titerdata),
                           sr_names = colnames(partial_titerdata),
