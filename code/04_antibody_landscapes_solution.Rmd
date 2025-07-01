@@ -46,7 +46,7 @@ single_map <- read.acmap(filename = here::here("data", "maps", "01_sars_cov_2_ma
 
 Antibody landscapes show how immunity distributes across variants in an antigenic map. The cross-reactivity of sera is quantified by the landscape's slope. The steeper the slope, the more specific a serum, and vice versa. The underlying geometry of the antigenic map - one antigenic distance unit corresponds to one two-fold change of neutralization titers - means that single exposure sera, from which the map was built, have a landscape slope around 1 on the log2 scale: With each antigenic distance unit away from the cone apex, the titers decrease by one two-fold. The slopes of multi-exposure sera are much lower than the slopes of single exposure sera.
 
-Multiple exposures are known to increase cross-reactivity. We here simulate the increase in cross-reactivity by reducing the titer fold changes based on values from the data by [Rössler, Netzl, et al. (2022)](https://doi.org/10.1038/s41467-022-35312-3). The slopes for multi-exposure sera in their data were between 0.4 (Pre-Omicron + BA.2 reinfection) and 0.8 (Vaccinated + Delta infection). We will simulate Delta reinfection by adjusting the Wu.1 infected single exposure samples to match the 0.8 log2-scale slope, and the BA.2 reinfection by adjusting the same samples with the log2-slope of 0.4.
+Multiple exposures are known to increase cross-reactivity. We here simulate the increase in cross-reactivity by reducing the titer fold changes based on values from the data by [Rössler, Netzl, et al. (2022)](https://doi.org/10.1038/s41467-022-35312-3). The slopes for multi-exposure sera in their data were between 0.4 (Pre-Omicron + BA.2 reinfection) and 0.8 (Vaccinated + Delta infection). We will simulate Delta reinfection by adjusting the Wu1 infected single exposure samples to match the 0.8 log2-scale slope, and the BA.2 reinfection by adjusting the same samples with the log2-slope of 0.4.
 
 ```{r creating_multi_exposure_sera}
 single_wu1 <- logtiterTable(single_map)[,grepl("Wu1", colnames(titerTable(single_map)))]
@@ -74,7 +74,7 @@ matrix_to_long <- function(current_matrix, sr_group){
 }
 
 rbind(matrix_to_long(ba2_reinf, "BA.2 reinfection"),
-      matrix_to_long(single_wu1, "Wu-1 infection"),
+      matrix_to_long(single_wu1, "Wu1 infection"),
       matrix_to_long(delta_bt, "Delta Breakthrough")) -> titer_long
 
 titer_long %>%
@@ -198,7 +198,7 @@ should resemble the standard deviation of titer repeat measurements.
 par(mfrow = c(1, 1)) # put plots back to original state
 
 # create a list of titer tables. You can also fit each table independently
-titertables <- list("Wu-1 infection" = titerTable(wu1_single_map), 
+titertables <- list("Wu1 infection" = titerTable(wu1_single_map), 
                     "Delta Breakthrough" = titerTable(delta_bt_map), 
                     "BA.2 reinfection" = titerTable(ba2_reinf_map))
 
@@ -229,7 +229,7 @@ slopes <- lapply(lndscp_fits, function(x) x$cone$cone_slope)
 
 slopes
 ```
-The small variation from the expected values (1, 0.8, 0.4) can be explained by the fact that the base map contains other serum groups that determine the variants' positions. For example, if we use the Wu-1 only map from above as base map, we can see that the slopes match our input values:
+The small variation from the expected values (1, 0.8, 0.4) can be explained by the fact that the base map contains other serum groups that determine the variants' positions. For example, if we use the Wu1 only map from above as base map, we can see that the slopes match our input values:
 
 ```{r}
 lndscp_fits_single <- lapply(titertables, function(titer_table){
@@ -302,7 +302,7 @@ titer_long %>%
   unique() -> gmt_data
 
 gmt_single <- gmt_data %>%
-  filter(sr_group == "Wu-1 infection")
+  filter(sr_group == "Wu1 infection")
 
 coords <- agCoords(single_map)
 
@@ -315,7 +315,7 @@ for (j in seq_len(nrow(coords))) {
           y = rep(coords[j, 2], 2),
           z = c(0, gmts$logtiter[j]),
           col = "grey50",
-          toggle = sprintf("GMT, %s", "Wu-1 infection"),
+          toggle = sprintf("GMT, %s", "Wu1 infection"),
           geometry = TRUE,
           opacity = 0.7,
           lwd = 0.2 
@@ -328,7 +328,7 @@ for (j in seq_len(nrow(coords))) {
           z         = gmts$logtiter[j],
           size      = 0.9,
           col  = "blue",
-          toggle = sprintf("GMT, %s", "Wu-1 infection"),
+          toggle = sprintf("GMT, %s", "Wu1 infection"),
           opacity   = 1 
           
         )
@@ -345,9 +345,9 @@ And the landscape like this:
 # Add GMT landscapes
 data3js <- lndscp3d_surface(
       data3js = data3js,
-      object = lndscp_fits$`Wu-1 infection`,
+      object = lndscp_fits$`Wu1 infection`,
       crop2chull = FALSE,
-      toggle = sprintf("GMT landscape, %s", "Wu-1 infection"),
+      toggle = sprintf("GMT landscape, %s", "Wu1 infection"),
       grid_spacing = 0.5,
       padding = 0.2,
       options = list(
@@ -475,7 +475,7 @@ comb_data %>%
 To evaluate the quality of landscape fits, we can compare the measured and fitted values. The error between measured value for each sera and fitted value for the GMT landscape is stored for each fit in the `residuals` field. They are on the log2 scale:
 
 ```{r}
-lndscp_fits$`Wu-1 infection`$residuals
+lndscp_fits$`Wu1 infection`$residuals
 ```
 
 From them, we can calculate and compare the root mean squared error (RMSE) between individual serum titers and the fitted 
@@ -562,7 +562,7 @@ the quality of the landscape fit.
 
 Below, we will demonstrate two approaches to interpolating titers against unmeasured antigens. The first one is including unmeasured 
 antigens as "\*" in the titer table for each serum. To demonstrate, we select random antigens and set their titers to "\*" in the titertables 
-for Wu-1 infected and Delta Breakthrough samples. We remove these antigens from the BA.1 reinfected titertables.
+for Wu1 infected and Delta Breakthrough samples. We remove these antigens from the BA.1 reinfected titertables.
 
 ```{r}
 # randomly select not measured ags
@@ -597,7 +597,7 @@ slopes <- lapply(lndscp_fits_sub, function(x) x$cone$cone_slope)
 slopes
 ```
 
-The remaining antigens were enough to fit very similar slopes to the full data set. *Importantly, removing the Wu-1 
+The remaining antigens were enough to fit very similar slopes to the full data set. *Importantly, removing the Wu1 
 antigen would have a stronger impact as it sets the column basis for each serum*.
 
 Let's compare the fitted landscape values:
@@ -606,7 +606,7 @@ Let's compare the fitted landscape values:
 lapply(lndscp_fits_sub, function(x) x$fitted.values)
 ```
 
-For the Wu-1 infected and Delta Breakthrough samples, titer values were fitted also for the not measured antigens that were present in 
+For the Wu1 infected and Delta Breakthrough samples, titer values were fitted also for the not measured antigens that were present in 
 the table but set to \*. When we excluded them, we do not get a fitted value. 
 
 We can interpolate the landscape value at any coordinate in the following way:
@@ -640,7 +640,7 @@ fitted_vals_complete <- do.call(rbind, fitted_vals_complete) %>%
 
 fitted_vals_sub <- lapply(lndscp_fits_sub, function(x) x$fitted.values)
 fitted_vals_sub$`BA.2 reinfection` <- c(fitted_vals_sub$`BA.2 reinfection`, predicted_vals)
-fitted_vals_sub$`BA.2 reinfection` <- fitted_vals_sub$`BA.2 reinfection`[names(fitted_vals_sub$`Wu-1 infection`)]
+fitted_vals_sub$`BA.2 reinfection` <- fitted_vals_sub$`BA.2 reinfection`[names(fitted_vals_sub$`Wu1 infection`)]
 fitted_vals_sub <- do.call(rbind, fitted_vals_sub) %>%
   as.data.frame() %>%
   rownames_to_column(var = "sr_group") %>%
