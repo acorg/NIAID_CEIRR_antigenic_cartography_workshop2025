@@ -115,10 +115,10 @@ serum_variants = colnames(titers) %>%
   map_chr(1)
 
 ## square map 
-# write.csv(
-#   titers,
-#   file = here::here("data", "titerdata", "01_sars_cov_2_titerdata_square.csv")
-# )
+write.csv(
+  titers,
+  file = here::here("data", "titerdata", "01_sars_cov_2_titerdata_square.csv")
+)
 
 
 ## standard map
@@ -289,6 +289,12 @@ saveMap = function(titer_path, optimize = T){
   )  
   
 }
+
+saveMap(
+  "01_sars_cov_2_titerdata_square.csv",
+  T
+)
+
 
 saveMap(
   "01_sars_cov_2_titerdata.csv",

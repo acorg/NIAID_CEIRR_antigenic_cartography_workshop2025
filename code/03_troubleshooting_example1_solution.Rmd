@@ -1,0 +1,255 @@
+---
+  title: "03 Troubleshooting example I"
+author: "Sam Turner"
+date: "2025-07-01"
+output: html_document
+editor_options: 
+  markdown: 
+  wrap: 72
+html_document:
+  highlight: textmate
+---
+  
+```{r setup, include=FALSE}
+rm(list = ls()) # clear environment at the beginning of each session
+setwd(here::here("code/")) # set correct working directory
+knitr::opts_chunk$set(echo = TRUE,
+                      #fig.width=8, fig.height=6,
+                      fig.align = "center")
+```
+
+
+
+Working code is provided for each section in the file `02_map_diagnostics_1_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
+
+### Load the required packages
+
+We will be using the ['tidyverse'](https://www.tidyverse.org) family of packages for manipulating and plotting titer data, and the [`Racmacs`](https://acorg.github.io/Racmacs/index.html) package for constructing and plotting antigenic maps.
+
+```{r load_packages}
+# Package names
+packages <- c("Racmacs", "tidyverse")
+
+# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+
+invisible(lapply(packages, library, character.only = TRUE))
+
+#set ggplot2 theme
+theme_set(theme_bw() + 
+            theme(strip.background.x = element_blank()))
+
+source(here::here("internal", "code", "03_troubleshooting_example1_setup.R"))
+```
+
+
+In this exercise, we will be invesitgating how to optimally allocate experimental resources to produce a well-coordinated and resolved antigenic map.
+
+Imagine we have live virus isolates for 14 variants:
+
+```{r}
+cat(paste0(agNames(.FULLMAP), collapse = "\n"))
+```
+
+We have the capacity to raise up to, say, 15 sera against these variants. To which variants should we allocate these sera? Let's investigate the implications of this experimental planning decision on the final map, by looking at the effect on uncertainty in antigen positions as measured by the triangulation and bootstrapping blobs.
+
+We'll be using a function `checkMap15` to do this. It should already be attached in your global environment (you don't need to source it). It takes three arguments:
+
+1. a function which takes an antigenic map and returns triangulation blobs which are ready to be plotted (i.e. the function should not call `plot`)
+
+Write a function which takes a single argument, `acmap`, and returns triangulation blobs showing the area each antigen can occupy without increasing the stress by more than 1.5 units:
+
+```{r, message=FALSE}
+triangulate_function = function(acmap){
+  triangulationBlobs(
+    acmap,
+    stress_lim = 1.5,
+    grid_spacing = 0.05,
+    antigens = T,
+    sera = T
+    )
+}
+```
+
+
+
+2. a function which takes an antigenic map and returns noisy bootstrap blobs which are ready to be plotted (i.e. the function should not call `plot`)
+
+Write a function which takes a single argument, `acmap`, and returns noisy bootstrap blobs, with no per-antigen noise, and the standard deviation of titer repates set to 0.7. The blobs should be calculated using 1000 repeats, with the map "relaxed" rather than reoptimised each time, and should include 75% of the boostrap repeats:
+
+```{r, message=FALSE}
+noisy_boostrap_function = function(acmap){
+  
+  bs = bootstrapMap(
+    acmap,
+    "noisy",
+    bootstrap_repeats = 1000,
+    ag_noise_sd = 0,
+    titer_noise_sd = 0.7,
+    reoptimize = F,
+    bootstrap_ags = T,
+    bootstrap_sr = T
+  )
+  
+  bb = bootstrapBlobs(
+    bs,
+    conf.level = 0.75,
+    gridspacing = 0.05
+    )
+  
+  bb
+}
+```
+
+Before we go on to specifying sera, let's check that your function defintions are working:
+
+```{r, message=FALSE}
+checkMap15(
+  c(
+  "Wu1_1",
+  "Wu1_2",
+  "Wu1_3",
+  "B.1.621_1",
+  "B.1.621_2",
+  "B.1.621_3",
+  "BA.2_1",
+  "BA.2_2",
+  "BA.2_3",
+  "BA.2.75_1",
+  "BA.2.75_2",
+  "BA.2.75_3",
+  "BA.2.12.1_1",
+  "BA.2.12.1_2",
+  "BA.2.12.1_3"
+  ),
+  triangulate_function = triangulate_function,
+  noisy_boostrap_function = noisy_boostrap_function
+)
+```
+
+
+3. a character vector of your serum choices
+
+Your choices for sera are below. The easiest way to specify them is to copy and paste the expression below, and comment out or delete sera you don't want to include:
+
+```{r}
+c(
+  "Wu1_1",
+  "Wu1_2",
+  "Wu1_3",
+  "B.1.621_1",
+  "B.1.621_2",
+  "B.1.621_3",
+  "BA.2_1",
+  "BA.2_2",
+  "BA.2_3",
+  "BA.2.75_1",
+  "BA.2.75_2",
+  "BA.2.75_3",
+  "BA.2.12.1_1",
+  "BA.2.12.1_2",
+  "BA.2.12.1_3",
+  "BA.5_1",
+  "BA.5_2",
+  "BA.5_3",
+  "BQ.1.1_1",
+  "BQ.1.1_2",
+  "BQ.1.1_3",
+  "BF.7_1",
+  "BF.7_2",
+  "BF.7_3",
+  "XBB.1.5_1",
+  "XBB.1.5_2",
+  "XBB.1.5_3",
+  "HV.1_1",
+  "HV.1_2",
+  "HV.1_3",
+  "HK.3_1",
+  "HK.3_2",
+  "HK.3_3",
+  "JN.1_1",
+  "JN.1_2",
+  "JN.1_3",
+  "KP.2.3_1",
+  "KP.2.3_2",
+  "KP.2.3_3",
+  "KP.3.1.1_1",
+  "KP.3.1.1_2",
+  "KP.3.1.1_3"
+)
+```
+
+
+Test out different selections of sera, and see what effect they have on the map diagnostics. Which selection produces the most tightly resolved antigenic map? Why?
+
+Note: you can copy + paste this code cell so you don't delete your previous output when testing a new serum combination.
+
+
+```{r, message=FALSE}
+
+# There is no "right" answer here, but a sensible selection is one which covers the whole antigenic space of the antigens. For example:
+
+checkMap15(
+  c(
+    "Wu1_1",
+    "Wu1_2",
+    "Wu1_3",
+    
+    "B.1.621_1",
+    "B.1.621_2",
+    
+    "BA.2_1",
+    "BA.2_2",
+    
+    "BA.5_1",
+    "BA.5_2",
+    
+    "XBB.1.5_1",
+    "XBB.1.5_2",
+    
+    "JN.1_1",
+    "JN.1_2",
+    
+    "KP.3.1.1_1",
+    "KP.3.1.1_2"
+  ),
+  triangulate_function = triangulate_function,
+  noisy_boostrap_function = noisy_boostrap_function
+)
+
+```
+
+
+What about if you have capacity for only 8 sera? Use `checkMap8` to investigate:
+
+```{r, message=FALSE}
+
+checkMap8(
+   c(
+    "Wu1_1",
+    "Wu1_2",
+    
+    "B.1.621_1",
+    
+    "BA.2_1",
+    
+    "BA.5_1",
+    
+    "XBB.1.5_1",
+    
+    "JN.1_1",
+    "JN.1_2",
+    
+    "KP.3.1.1_1",
+  ),
+  triangulate_function = triangulate_function,
+  noisy_boostrap_function = noisy_boostrap_function
+)
+
+# Note that this solution does not have repeats of the same antigen, to try to maximise the antigenic diversity of the sera. Of course, there may be very good non-cartography reasons to have repeats.
+
+```
+
