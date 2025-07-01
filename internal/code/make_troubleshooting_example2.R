@@ -27,9 +27,9 @@ srOutline(map) <- agFill(map)[as.character(srGroups(map))]
 plot(map)
 
 # create artificial multi exposure sera
-reduce_serum_fc <- function(single_map, sr_target = "Wu.1", target_slope = 0.8, sr_new = "BT"){
+reduce_serum_fc <- function(single_map, sr_target = "Wu.1", target_slope = 0.8, sr_new = "BT", logtiter_increase = 0){
   
-  single_wu1 <- logtiterTable(single_map)[,grepl(sr_target, colnames(titerTable(single_map)))]
+  single_wu1 <- logtiterTable(single_map)[,grepl(sr_target, colnames(titerTable(single_map)))] + logtiter_increase
   single_table_dist <- tableDistances(single_map)[,grepl(sr_target, colnames(titerTable(single_map)))]
   
   delta_bt <- abs(sweep(target_slope*apply(single_table_dist, c(1,2), as.numeric), MARGIN = 2, single_wu1[1,c(1:3)], `-`))
@@ -41,19 +41,22 @@ reduce_serum_fc <- function(single_map, sr_target = "Wu.1", target_slope = 0.8, 
 }
 
 # add higher titers for reexposed Ags
-wt_xbb15 <- reduce_serum_fc(map, "Wu.1", target_slope = 0.3, sr_new = "Wu.1 + XBB.1.5")
+wt_xbb15 <- reduce_serum_fc(map, "Wu.1", target_slope = 0.3, sr_new = "Unknown 1", logtiter_increase = 1.5)
 wt_xbb15[c("XBB.1.5", "HK.3"), ] <- wt_xbb15[c("XBB.1.5", "HK.3"), ]*1.2
-xbb15_reinf <- reduce_serum_fc(map, "BA.2", target_slope = 0.6, sr_new = "XBB.1.5 Reinfection")
+xbb15_reinf <- reduce_serum_fc(map, "BA.2", target_slope = 0.4, sr_new = "Unknown 2", logtiter_increase = 2)
 xbb15_reinf[c("XBB.1.5", "HK.3", "JN.1", "KP.2.3"), ] <- xbb15_reinf[c("XBB.1.5", "HK.3", "JN.1", "KP.2.3"), ]*1.4
+sample3 <- reduce_serum_fc(map, "B.1.621", target_slope = 0.2, sr_new = "Unknown 3", logtiter_increase = 1.5)
+sample3[c("XBB.1.5", "HK.3", "JN.1"), ] <- sample3[c("XBB.1.5", "HK.3", "JN.1"), ]*1.2
 
 # make new map
-new_tt <- cbind(titerTable(map), wt_xbb15, xbb15_reinf)
+new_tt <- cbind(titerTable(map), wt_xbb15, xbb15_reinf, sample3)
 new_map <- make.acmap(new_tt)
 srGroups(new_map) <- sapply(srNames(new_map), function(x){
   temp_split <- strsplit(x, "\\.")[[1]]
   paste(temp_split[1:(length(temp_split)-1)], collapse = ".")
 })
-
+srGroups(new_map) <- gsub("Wu.1", "Wu-1", srGroups(new_map))
+plot(procrustesMap(new_map, map))
 ## check new map
 # agFill(new_map) <- agFill(map)
 # srOutline(new_map) <- c(srOutline(map), rep("grey", 3), rep("grey30", 3))
@@ -92,12 +95,27 @@ early_ba2 <- create_early_sampled_sera(map, "BA.2", log2(40/10), sr_new = "BA.2 
 
 # make new map
 new_tt <- cbind(titerTable(map), early_wu1, early_jn1, early_ba2)
+
+new_tt <- apply(new_tt, 1:2, function(x){
+  temp <- as.numeric(x)
+  if(!is.na(temp)){
+    if(temp < 40){
+      "<40"
+    } else {
+      x
+    }
+  } else {
+    x
+  }
+})
+
+
 new_map <- make.acmap(new_tt)
 srGroups(new_map) <- sapply(srNames(new_map), function(x){
   temp_split <- strsplit(x, "\\.")[[1]]
   paste(temp_split[1:(length(temp_split)-1)], collapse = ".")
 })
-
+srGroups(new_map) <- gsub("Wu.1", "Wu-1", srGroups(new_map))
 save.acmap(new_map, "data/maps/03_troubleshooting_map2b.ace")
 
 # #check new map
@@ -106,3 +124,4 @@ save.acmap(new_map, "data/maps/03_troubleshooting_map2b.ace")
 # plot(new_map, plot_stress = TRUE)
 # plot(procrustesMap(map, new_map))
 # RacViewer(new_map)
+

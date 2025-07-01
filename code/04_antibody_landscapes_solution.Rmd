@@ -129,21 +129,22 @@ ylim_zoom <- lims$ylim
 ```
 
 
-```{r}
+```{r, fig.height=7, fig.width=12}
 # Do plotting
 par(mfrow = c(2, 3))
 
-plot(wu1_single_map, fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE)
+plot(wu1_single_map, fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE,
+     margins = NULL)
 
-plot(delta_bt_map, fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom+0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE)
+plot(delta_bt_map, fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom+0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE,margins = NULL)
 
-plot(ba2_reinf_map, fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d",  plot_stress = TRUE)
+plot(ba2_reinf_map, fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d",  plot_stress = TRUE,margins = NULL)
 
-plot(procrustesMap(wu1_single_map, wu1_single_map), fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE)
+plot(procrustesMap(wu1_single_map, wu1_single_map), fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE,margins = NULL)
 
-plot(procrustesMap(delta_bt_map, wu1_single_map), fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom+0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE)
+plot(procrustesMap(delta_bt_map, wu1_single_map), fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom+0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE,margins = NULL)
 
-plot(procrustesMap(ba2_reinf_map, wu1_single_map), fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE)
+plot(procrustesMap(ba2_reinf_map, wu1_single_map), fill.alpha = 0.9, plot_labels = FALSE, outline.alpha = 0.9, xlim = xlim_zoom, ylim = ylim_zoom + 0.5, grid.col = "#cfcfcf", grid.margin.col="#7d7d7d", plot_stress = TRUE,margins = NULL)
 
 ```
 

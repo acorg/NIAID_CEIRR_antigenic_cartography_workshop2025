@@ -73,24 +73,43 @@ target_optim <- c(1:numOptimizations(map))[allMapStresses(map) > 890][1]
 target_optim2 <- c(1:numOptimizations(map))[allMapStresses(map) > 897][1]
 ```
 
-```{r, fig.show='hold',fig.align='center'}
+```{r, fig.width=16, fig.height=10}
+par(mfrow = c(2, 3))
 plot(map, optimization_number = 1, 
        plot_blobs = FALSE,
-     plot_stress = TRUE)
+     plot_stress = TRUE,
+     margins = NULL)
 plot(map, optimization_number = target_optim, 
        plot_blobs = FALSE,
-     plot_stress = TRUE)
+     plot_stress = TRUE,
+     margins = NULL)
 plot(map, optimization_number = target_optim2, 
        plot_blobs = FALSE,
-     plot_stress = TRUE)
+     plot_stress = TRUE,
+     margins = NULL)
+plot(procrustesMap(map, map, optimization_number = 1),
+       plot_blobs = FALSE,
+     plot_stress = TRUE,
+     margins = NULL)
+plot(procrustesMap(map, map, optimization_number = target_optim), 
+       plot_blobs = FALSE,
+     plot_stress = TRUE,
+     margins = NULL)
+plot(procrustesMap(map, map, optimization_number = target_optim2),
+       plot_blobs = FALSE,
+     plot_stress = TRUE,
+     margins = NULL)
 ```
 
 This shows that with only 13 points added total map stress, there is a different map conformation that shows the immune escape of JN.1 variants as expected from their escape in human multi-exposure sera. 
+
+
 
 Comparing the antigen stress per titer for >LOD titers shows an overall comparable stress per antigen, with the optimization number 130 having slightly
 lower mean stress when excluding non detectable titers. 
 
 ```{r}
+par(mfrow = c(1,1))
 ag_stress_per_titer <- lapply(c(1, target_optim2), function(x){
   
   as.data.frame(agStressPerTiter(map, optimization_number = x)) %>%
