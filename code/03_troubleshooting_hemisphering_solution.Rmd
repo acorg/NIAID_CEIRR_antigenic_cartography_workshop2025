@@ -66,7 +66,7 @@ agFill(lab1_map) <- agfills
 
 srOutline(lab1_map) <- sroutlines
 
-view(lab1_map,  options=list(xlim=c(-8,8), ylim=c(-8,8)))
+plot(lab1_map,  options=list(xlim=c(-8,8), ylim=c(-8,8)))
 
 ```
 
@@ -95,17 +95,17 @@ lab2_map <- applyPlotspec(lab2_map, lab1_map)
 lab2_map <- realignMap(lab2_map, lab1_map)
 pc = procrustesMap(lab2_map, lab1_map)
 
-view(pc,  options=list(xlim=c(-8,8), ylim=c(-8,8)))
+plot(pc,  options=list(xlim=c(-8,8), ylim=c(-8,8)))
 
 ```
 
 Well shoot. Something is definitely wrong. This lab's data is predicting
-that majority of the orange cluster and purple cluster is actually
+that the majority of the orange cluster and purple cluster is actually
 similar to each other, unlike lab1's data which suggested they were
 different. What is going on? Did one of the labs mess up the titers for
 orange cluster somehow? Given that in the first map the orange antigens
 don't seem to have sera near them, maybe their position is less
-uncertain. After thinking about this for an hour, Mappe decides to leave
+certain. After thinking about this for an hour, Mappe decides to leave
 it for Monday. What a great way to start a weekend with an unresolved
 problem fiddling around with the neurons in your brain...
 
@@ -140,7 +140,7 @@ lab2_map_repeat <- applyPlotspec(lab2_map_repeat, lab1_map)
 lab2_map_repeat <- realignMap(lab2_map_repeat, lab1_map)
 pc_repeat = procrustesMap(lab2_map_repeat, lab1_map)
 
-view(pc_repeat,  options=list(xlim=c(-8,8), ylim=c(-8,8)))
+plot(pc_repeat,  options=list(xlim=c(-8,8), ylim=c(-8,8)))
 
 ```
 
@@ -208,7 +208,7 @@ thresholded titers affecting the results? and many more.
 
 While thinking very hard, Mappe suddenly remembers an observation from
 Friday 4 PM: "Given that in the first map the orange antigens don't seem
-to have sera near them, maybe their position is less uncertain". What if
+to have sera near them, maybe their position is less certain". What if
 this is a "fundamental" uncertainty that can't really be resolved by
 repeating titrations? Recalling reading something about assessing map
 uncertainy in the Racmacs tutorial pages, Mappe quickly goes back and
@@ -228,8 +228,8 @@ repeating titers."
 Having read the document, there are multiple methods to assess
 uncertainty of a map using bootstrapping. Each method more or less
 "modifies" the titers randomly and reoptimizes the new table (as many
-times as one wishes to his/her heart's content and limitations of
-his/her mortality).
+times as one wishes to their heart's content and limitations of
+their mortality).
 
 Bayesian bootstrapping randomly reweighs the importance of each titer so
 they sometimes contribute more and sometimes less to the cost function.
@@ -259,7 +259,7 @@ of this and plot the blobs using bootstrapBlobs
 bootstrapped_map <- read.acmap("../data/maps/03_hemisphering_bootstrapped_map_lab1.ace")
 blobs <- bootstrapBlobs(bootstrapped_map)
 
-view(blobs)
+Racmacs::view(blobs)
 
 ```
 
