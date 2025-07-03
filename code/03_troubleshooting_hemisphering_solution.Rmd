@@ -1,0 +1,331 @@
+---
+title: "03 Throubleshooting - Hemisphering"
+author: "Sina Tureli (st757@cam.ac.uk)"
+date: '2025-07-01'
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r}
+rm(list = ls()) # clear environment at the beginning of each session
+setwd(here::here("code/")) # set correct working directory
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.width=4, fig.height=4,
+                      fig.align = "center")
+```
+
+This markdown contains the exercise code to teach how to identify
+hemisphering problems in a map due to uncertainty of data and to analyse
+it using bootstrapping.
+
+For this exercise it is useful to know the following functions from
+Racmacs package: make.acmap, agFill, srOutline, view, applyPlotspec,
+realignMap, procrustesMap, logtiterTable. If you don't know any of the
+functions type for instance ?realignMap to read the documentation.
+
+```{r}
+library(Racmacs)
+```
+
+We will again be working with artificial titre data. Unlike the column
+basis exercise, we do not have a ground truth map. Instead we will just
+be in a simulated situation where we ask two labs to produce the same
+set of titrations and compare the results...in the form of a funny
+little story!
+
+It is Thursday and the first lab has already sent Mappe McCarthy, the
+antigenic cartography expert, their data and the table is named
+"03_hemisphering_lab1.csv" (it is a bit confusing that they prefixed the
+table name with the label hemisphering). Mappe was expecting the data no
+earlier than Friday but this lab works both meticulously and very
+efficiently so it is not very surprising that they sent their data
+earlier than lab 2. They are probably very curious about the results.
+
+Exercise1: Load the lab1 table, make a map, inspect it visually and
+color it according to what you visually think the clusters are.
+
+```{r solution1}
+lab1_titerdata <- read.csv("../data/titerdata/03_hemisphering_lab1.csv", row.names = "X")
+lab1_map <- make.acmap(lab1_titerdata,
+                       ag_names = rownames(lab1_titerdata),
+                       sr_names = colnames(lab1_titerdata),
+                       number_of_dimensions = 2,
+                       number_of_optimizations = 2000)
+
+agfills = append(append(append(append(rep("red",5), rep("blue",4)),rep("green",5)),
+                        rep("purple",6)), rep("orange", 10))
+                        
+sroutlines = append(append(append(rep("red",5), rep("blue",4)),rep("green",4)),
+                    rep("purple",5))
+
+agFill(lab1_map) <- agfills
+
+srOutline(lab1_map) <- sroutlines
+
+view(lab1_map,  options=list(xlim=c(-8,8), ylim=c(-8,8)))
+
+```
+
+"Well that is a nice map, everything is clustered clearly and coloring
+was easy. Science can sometimes be very satisfying!" thinks Mappe
+McCarthy.
+
+It is now Friday and as Mappe finishes polishing his map for a nice
+visualization, the data from the second lab hits the email:
+"03_hemisphering_lab2.csv" (what is up with the label hemisphering?). It
+is 4 PM on a Friday evening but given how nice the first map was, the
+second one should be a breeze, ten minutes at most (famous last words).
+
+Exercise2: Load the lab 2 table, make a map, apply the orientation and
+styling of map1 and compare it via procrustes.
+
+```{r solution2}
+lab2_titerdata <- read.csv("../data/titerdata/03_hemisphering_lab2.csv", row.names = "X")
+lab2_map <- make.acmap(lab2_titerdata,
+                       ag_names = rownames(lab2_titerdata),
+                       sr_names = colnames(lab2_titerdata),
+                       number_of_dimensions = 2,
+                       number_of_optimizations = 2000)
+
+lab2_map <- applyPlotspec(lab2_map, lab1_map)
+lab2_map <- realignMap(lab2_map, lab1_map)
+pc = procrustesMap(lab2_map, lab1_map)
+
+view(pc,  options=list(xlim=c(-8,8), ylim=c(-8,8)))
+
+```
+
+Well shoot. Something is definitely wrong. This lab's data is predicting
+that majority of the orange cluster and purple cluster is actually
+similar to each other, unlike lab1's data which suggested they were
+different. What is going on? Did one of the labs mess up the titers for
+orange cluster somehow? Given that in the first map the orange antigens
+don't seem to have sera near them, maybe their position is less
+uncertain. After thinking about this for an hour, Mappe decides to leave
+it for Monday. What a great way to start a weekend with an unresolved
+problem fiddling around with the neurons in your brain...
+
+Monday comes and not having had any opportunity to do computational
+experiments with the data, Mappe hasn't really come up with a very
+satisfying explanation and against better judgement decides to ask one
+of the labs to repeat the orange antigens' whole titration set (never do
+this in real life!). The map1 looked very nice and lab1 works very
+carefully. There is a strong (unjustified) prior for asking the second
+lab to titrate the data and so does Mappe. They rightfully complain but
+trust an expert's instincts and go back to the lab to reproduce a subset
+of titrations again.
+
+About two weeks later the data arrives (with \~140 new titrations and
+the others same as before): "03_hemisphering_lab2_repeat.csv" (huh...).
+"Well lets see how this data looks like" Mappe thinks, half excited,
+half scared.
+
+Exercise3: Load the lab 2 table, make a map, apply the styling of map1
+and compare via procrustes.
+
+```{r solution3}
+lab2_titerdata_repeat <- read.csv("../data/titerdata/03_hemisphering_lab2_repeat.csv", 
+                                  row.names = "X")
+lab2_map_repeat <- make.acmap(lab2_titerdata_repeat,
+                              ag_names = rownames(lab2_titerdata_repeat),
+                              sr_names = colnames(lab2_titerdata_repeat),
+                              number_of_dimensions = 2,
+                              number_of_optimizations = 3000)
+
+lab2_map_repeat <- applyPlotspec(lab2_map_repeat, lab1_map)
+lab2_map_repeat <- realignMap(lab2_map_repeat, lab1_map)
+pc_repeat = procrustesMap(lab2_map_repeat, lab1_map)
+
+view(pc_repeat,  options=list(xlim=c(-8,8), ylim=c(-8,8)))
+
+```
+
+"Well this map looks much more like the first map, only two orange
+antigens are near the purple ones. Yet somehow I am not very happy.". It
+feels like a bit of a fictitious victory. Mappe could say "now it looks
+more parsimonious with lab 1, thanks and bye", call it a day and move
+on. But that gut feeling that there is something more to understand will
+not leave.
+
+Perhaps one extra check to do, now that there is two sets of repeats
+from lab2, is to compare the error for non-thresholded titers of lab1 vs
+lab2. If the repeat titers have less error than original ones when
+compared to lab1, then indeed this could be further evidence for the
+idea that lab 2's first titration had some systematic errors which
+resulted in a weird map.
+
+Exercise4: Extract non-thresholded titers for lab1, lab2, lab2_repeat
+and compare lab1 titers to each by a scatter plot. Write the sd of the
+error on the title
+
+```{r solution4, fig.width=5, fig.height=5}
+lab1_log_titers = logtiterTable(lab1_map)
+lab2_log_titers = logtiterTable(lab2_map)
+lab2_repeat_log_titers = logtiterTable(lab2_map_repeat)
+
+valid_indices1 <- which(lab1_log_titers>-1 & lab2_log_titers>-1)
+valid_indices2 <- which(lab1_log_titers>-1 & lab2_repeat_log_titers>-1)
+
+x <- lab1_log_titers[valid_indices1]
+y <- lab2_log_titers[valid_indices1]
+sd_diff <- sd(x - y)
+
+plot(x, y, xlab = "lab1 log titers", ylab = "lab2 log titers", 
+     main=paste("SD(x - y):", round(sd_diff, 4)), 
+     xlim = c(0, 12), ylim = c(0, 12), asp = 1)
+
+
+x <- lab1_log_titers[valid_indices2]
+y <- lab2_repeat_log_titers[valid_indices2]
+
+sd_diff <- sd(x - y)
+
+plot(x, y, xlab = "lab1 log titers", ylab = "lab2 repeat log titers", 
+     main=paste("SD(x - y):", round(sd_diff, 4)), 
+     xlim = c(0, 12), ylim = c(0, 12), asp = 1)
+
+```
+
+OK, that is no good. The distribution of the error looks almost
+identical with only a slight increase in error SD for the lab2 titers vs
+lab2 repeat titers. \~0.85 error SD for titrations between two different
+labs is not off the limits. This clearly can't be a satisfying
+explanation. Mappe squirms a little bit realizing that this misjudgment
+resulted with a lab repeating \~180 titers for a not very tangible
+reason...
+
+Mappe steps back and thinks about this for a minute. There are three
+tables, all with reasonable error distance from each other. Yet the two
+maps look locally quite different from each other and two maps look
+quite similar, despite having same levels of repeat error. Mappe's mind
+races with questions: Is something wrong with the optimizer? Is it
+getting stuck in a local optima? Is the way the optimizer handles
+thresholded titers affecting the results? and many more.
+
+While thinking very hard, Mappe suddenly remembers an observation from
+Friday 4 PM: "Given that in the first map the orange antigens don't seem
+to have sera near them, maybe their position is less uncertain". What if
+this is a "fundamental" uncertainty that can't really be resolved by
+repeating titrations? Recalling reading something about assessing map
+uncertainy in the Racmacs tutorial pages, Mappe quickly goes back and
+check the pages:
+
+[Assessing Map
+Uncertainty](https://acorg.github.io/Racmacs/articles/assessing_map_uncertainty.html)
+
+[Bootstrap
+Maps](https://acorg.github.io/Racmacs/reference/bootstrapMap.html)
+
+The methods here just revolve around simulating what an experimental
+repeat for a data would look like. "Damn! I should have tried this much
+easier method before going for the much harder task of actually
+repeating titers."
+
+Having read the document, there are multiple methods to assess
+uncertainty of a map using bootstrapping. Each method more or less
+"modifies" the titers randomly and reoptimizes the new table (as many
+times as one wishes to his/her heart's content and limitations of
+his/her mortality).
+
+Bayesian bootstrapping randomly reweighs the importance of each titer so
+they sometimes contribute more and sometimes less to the cost function.
+
+Resample bootstrapping just masks titers randomly completely removing
+them from the cost.
+
+Noisy bootstrapping seems to imitate what an experimental repeat would
+do, takes the titers and adds some noise to it (with SD 0.7). Given that
+the latter one looks similar to what was done experimentally (one more
+little squirm), noisy bootstrap seems like a good option. Mappe puts
+together the required piece of code and clicks RUN...Well this will take
+a while (though no where near the time it would take to repeat 180
+titrations!)
+
+Exercise 5: Take the first map, carry out a noisy bootstrap using
+bootstrapMap with method="noisy", bootstrap_repeats=500. Take the output
+of this and plot the blobs using bootstrapBlobs
+
+```{r solution5}
+# if you have time run the following, otherwise just load the given map below
+
+# bootstrapped_map <- bootstrapMap(lab1_map, 
+#                                 bootstrap_repeats = 500,
+#                                 method="noisy")
+
+bootstrapped_map <- read.acmap("../data/maps/03_hemisphering_bootstrapped_map_lab1.ace")
+blobs <- bootstrapBlobs(bootstrapped_map)
+
+view(blobs)
+
+```
+
+Well the orange blobs are much larger than other blobs with orange
+antigens flipping sides along the long axis of the map. Clicking on one
+of the large orange blobs, one can clearly see that it is flipping
+sides. This strongly suggests that there is nothing wrong with any of
+the data produced by the labs, one is not more correct than the other,
+all are most likely good. This also suggests that there is nothing wrong
+with the optimizer. In the face of uncertain data and noise it is just
+exploring multiple equally feasible optima. Now having understood the
+phenomenon much better, Mappe can come up with a more precisely targeted
+experiment plan to address this and explanation to present the findings
+to the experimental partners.
+
+Exercise 6: Study the titer table for the map and think about the source
+of this uncertainty. This exercise does not require any code, you can
+write your thoughts below while inspecting the map and the titer table.
+
+---
+Solution 6:
+
+If you examine the titer table or the interactive map (by clicking on an 
+orange antigen and pressing T to see what it has been titrated against) 
+then you can see that
+
+1- The orange antigens have not been titrated against purple sera
+
+2- In the first map, there is no sera close to the orange antigens
+
+Both of these problems can be addressed experimentally though one is
+harder than the other. To address the first problem, it should be sufficient
+to titrate every orange antigen against say 4 purple sera. So we have to do 10 x
+4 new titrations (as opposed to the ~180 titrations!) and then if indeed
+the orange antigens are different from the purple, their titers will be
+low and the uncertainty will be resolved. The second problem would
+require raising, say four, convalescent sera against some antigens from
+the orange group, titrate them against all the orange antigens (12) as
+well as something like 10 antigens from other groups to precisely
+pinpoint their locations. So this could be considered a much harder task 
+considering also the raising sera. Therefore, if the precise side of the 
+orange antigens is important going forward, the most reasonable approach is 
+to first titrate them against the already existing purple sera and to devise 
+something more  complex only if that does not sufficiently resolve the problem.
+
+NOTE: This phenomenon is called hemisphering because it generally
+manifests itself as a cluster or a part of a cluster flipping sides
+with respect to the map or some sub parts of it. In three dimensions it
+could for instance happen in a case where the rest of the map is
+distributed on the surface of a sphere from North to South roughly
+around the same longitude and a cluster which has uncertain positioning
+flips from the western hemisphere to the eastern one as noise is added
+to the system.
+---
+
+The updated explanation for this phenomenon sits much more right with
+the gut feeling. Mappe decides to send an email to the experimental
+collaborators to explain the situation, thanking extra to lab 2 for
+their hard work on producing the repeats which has helped a lot in
+understanding this phenomenon and making sure that the final explanation
+is the correct one. It is probably not a great idea to ask for a yet
+another set of repeat titrations so Mappe decides to leave this
+difficult discussion for a later time.
+
+In acknowledgement of the labs' works Mappe decides to use the label
+from the data files to name this phenomenon as "hemisphering" and also
+makes a mental note:
+
+Next time be more "lazy" - Mappe McCarthy
