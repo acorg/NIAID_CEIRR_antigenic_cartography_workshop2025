@@ -234,7 +234,7 @@ names(aligned_spike_dnas) = setNames(
   names(GISAID_ids),
   unname(GISAID_ids))[
     names(aligned_spike_dnas) %>%
-      str_split(fixed("_")) %>%
+      str_split(fixed("|")) %>%
       map_chr(2)]
 
 aligned_spike_dnas = aligned_spike_dnas[names(antigen_colors)]
