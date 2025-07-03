@@ -1,6 +1,6 @@
 ---
 title: "Troubleshooting example 2"
-author: "Antonia Netzl"
+author: "Antonia Netzl (an604@cam.ac.uk)"
 date: "2025-07-01"
 output: html_document
 ---
@@ -53,7 +53,13 @@ srNames(map)
 ```
 We see that a few sera's exposure history is unknown.
 
-Let's plot the titers by exposure history:
+Let's check if there is more information in the serum groups field:
+
+```{r}
+srGroups(map)
+```
+
+We don't have additional information there. Let's plot the titers by exposure history:
 
 ```{r}
 logtable <- logtiterTable(map)
@@ -79,13 +85,7 @@ data_long %>%
 
 The known sera have highest titers against heir infecting variant. The unknown sera have higher titers and show much broader cross-neutralization than the other sera. Such patterns are known after multiple exposures.
 
-Let's check if there is more information in the serum groups field:
-
-```{r}
-srGroups(map)
-```
-
-We don't have additional information there. But we know that multi-exposure sera have higher cross-reactivity compared to single exposure sera and therefore decrease antigenic distances in a map. Hence, they should be removed from the map. Let's check the impact of the unknown sera on the map configuration and map stress. 
+We know that multi-exposure sera have higher cross-reactivity compared to single exposure sera and therefore decrease antigenic distances in a map. Hence, they should be removed from the map. Let's check the impact of the unknown sera on the map configuration and map stress. 
 
 To do that, we start by colouring based on serum group:
 
@@ -116,7 +116,7 @@ plot(map,
      show_error_lines = TRUE)
 ```
 
-The error lines show that the central sera unknown sera pull all variants closer to the middle.
+The error lines show that the central unknown sera pull all variants closer to the middle.
 
 ```{r}
 # color sera by stress:
@@ -137,7 +137,7 @@ plot(map,
      show_error_lines = FALSE)
 ```
 
-Colouring by stress also shows that these sera are the most stressed in the map. It is time to remove them:
+Colouring by stress shows that most sera are pretty stressed in the map, especially the specific sera that are at the map periphery. They want to pull their homologous variants out, but the central sera countaract this. It is time to remove them:
 
 ```{r}
 srFill(map) <- "transparent"
@@ -145,11 +145,11 @@ map_clean <- removeSera(map, srNames(map)[grepl("Unknown", srGroups(map))])
 map_clean <- optimizeMap(map_clean, 2, 100)
 map_clean <- realignMap(map_clean, map)
 
+plot(map_clean, plot_stress = TRUE)
 plot(procrustesMap(map_clean, map), plot_stress = TRUE)
 ```
 
-
-The plot above shows the map without the unknown sera, with arrows pointing to the item's position in the map including them. We see that the serum positions don't really change, but that antigens got pulled into the center by the highly cross-reactive sera. All analyses indicate that these sera come from individuals that had more than one exposure. Creating a map from including multiple exposure sera condenses the map and decreases antigenic 
+The plot above shows the map without the unknown sera, and the procrustes to the full map with arrows pointing to the item's position in the map including them. We see that the sera were pushed outwards, and that antigens got pulled into the center by the highly cross-reactive sera. All analyses indicate that these sera come from individuals that had more than one exposure. Creating a map including multiple exposure sera condenses the map and decreases antigenic 
 distances between variants. Such sera should be removed from antigenic maps with the purpose of representing basic 
 antigenic relationships.
 
@@ -210,7 +210,7 @@ data_long %>%
   scale_x_discrete(limits = agNames(map))
 ```
 
-Most of the Day 4 sera are <LOD against the majority of variants, some don't have highest titers against their homologous variant (Wu.1 Day 4). Such patterns can occur when the antibody response did not have enough time 
+Most of the Day 4 sera are <LOD against the majority of variants, some don't have highest titers against their homologous variant (Wu1 Day 4). Such patterns can occur when the antibody response did not have enough time 
 to mature before sampling. Titers close to the limit of detection can be above or below the LOD due to 
 measurement noise. 
 
@@ -253,6 +253,5 @@ plot(procrustesMap(map_clean, map), plot_stress = TRUE,
 
 We see that the map stress is much reduced after removing the early sampled sera. They had little effect on serum 
 positioning, but we see thow they pull antigens towards the center of the map.
-
 
 

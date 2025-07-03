@@ -58,10 +58,10 @@ agfills = append(rep("red",30), rep("blue",4))
 sroutlines = append(rep("red",15), c("blue"))
 agFill(full_map) <- agfills
 srOutline(full_map) <- sroutlines
-view(full_map, options=list(xlim=c(-5,5), ylim=c(-5,5)))
+plot(full_map, options=list(xlim=c(-5,5), ylim=c(-5,5)))
 ```
 
-For your convenience sera are named according to which antigen they  are 
+For your convenience sera are named according to which antigen they are 
 homologous to. In particular cluster two's serum is homologous to C2_Ag3. 
 
 We can imagine that cluster 1 is the currently circulating cluster and cluster 2 is a
@@ -96,7 +96,7 @@ then view the map.
 ```{r solution2}
 partial_map <- applyPlotspec(partial_map, full_map)
 partial_map <- realignMap(partial_map, full_map)
-view(partial_map, options=list(xlim=c(-5,5), ylim=c(-5,5)))
+plot(partial_map, options=list(xlim=c(-5,5), ylim=c(-5,5)))
 ```
 
 Well that is disappointing! Using the partial titer table, the new antigens 
@@ -119,7 +119,7 @@ print(tableDistances(partial_map)[,16])
 Note that because this serum has not been titrated against the blue cluster, 
 its maximum titer (320) occurs against two antigens from the red cluster 
 (C1_Ag20 and C1_Ag28). Therefore the table distance against these antigens are
-zero and that is what the optimization tries to achieve as well as alot of low 
+zero and that is what the optimization tries to achieve as well as a lot of low 
 distances like 1 against other antigens from the red cluster. Had this serum 
 been titrated against its homologous antigen as well and its titer was something 
 like 1280, a titer of 320 would instead be a distance of 2 instead of 0. So maybe 
@@ -151,7 +151,7 @@ if a serum which has not been titrated against its homologous or similar
 antigens has all <10 for its titers, its table distances to each of these
 antigens will be zero but in reality one can expect this serum to be quite
 further away from these antigens because very low titers might indicate 
-antigenic differences. If we expect that homologous antigen titer should 
+antigenic differences. If we expect that the homologous antigen titer should 
 be something around 1280, then we can replace the formula above with:
 
 $$D_{i,s} = max(1280, max(log_2(titer_{s}/10))) - log_2(titer_{i,s}/10)$$
@@ -202,7 +202,7 @@ mincol_map <- make.acmap(partial_titerdata,
 
 mincol_map <- applyPlotspec(mincol_map, full_map)
 mincol_map <- realignMap(mincol_map, full_map)
-view(procrustesMap(mincol_map, full_map), options=list(xlim=c(-5,5), ylim=c(-5,5)))
+plot(procrustesMap(mincol_map, full_map), options=list(xlim=c(-5,5), ylim=c(-5,5)))
 
 ```
 
@@ -253,7 +253,7 @@ fixedcol_map <- make.acmap(partial_titerdata,
 
 fixedcol_map <- applyPlotspec(fixedcol_map, full_map)
 fixedcol_map <- realignMap(fixedcol_map, full_map)
-view(procrustesMap(fixedcol_map, full_map),
+plot(procrustesMap(fixedcol_map, full_map),
      options=list(xlim=c(-5,5), ylim=c(-5,5)))
 ```
 
@@ -273,7 +273,7 @@ approach would be that the titers of the blue serum (from the partial table)
 are generally quite low and that it is likely not titrated against an antigen
 which is similar to its homologous antigen. There is still the possibility that
 this serum was actually from the red cluster but it is a low reactivity serum
-and thus has generally low titers, even against its homologous antigen. Therefore
+and thus has generally low titers, even against its homologous antigen. Therefore,
 where as this approach can resolve issues arising from not titrating against
 homologous antigens, its usage should be determined by carefully weighing every
 other piece of information you have about these antigens and sera and the 

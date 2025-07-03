@@ -1,6 +1,6 @@
 ---
   title: "03 Troubleshooting example I"
-author: "Sam Turner"
+author: "Sam Turner (sat65@cam.ac.uk)"
 date: "2025-07-01"
 output: html_document
 editor_options: 
@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 
 
-Working code is provided for each section in the file `02_map_diagnostics_1_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
+Working code is provided for each section in the file `03_troubleshooting_example1_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
 
 ### Load the required packages
 
@@ -54,7 +54,7 @@ Imagine we have live virus isolates for 14 variants:
 cat(paste0(agNames(.FULLMAP), collapse = "\n"))
 ```
 
-We have the capacity to raise up to, say, 15 sera against these variants. To which variants should we allocate these sera? Let's investigate the implications of this experimental planning decision on the final map, by looking at the effect on uncertainty in antigen positions as measured by the triangulation and bootstrapping blobs.
+We have the capacity to raise up to, say, 15 sera against these variants. To which variants should we allocate these sera? Let's investigate the implications of this experimental planning decision on the final map by looking at the effect on uncertainty in antigen positions as measured by the triangulation and bootstrapping blobs.
 
 We'll be using a function `checkMap15` to do this. It should already be attached in your global environment (you don't need to source it). It takes three arguments:
 
@@ -80,7 +80,7 @@ noisy_boostrap_function = function(acmap){
 }
 ```
 
-Before we go on to specifying sera, let's check that your function defintions are working:
+Before we go on to specifying sera, let's check that your function definitions are working:
 
 ```{r, message=FALSE}
 checkMap15(

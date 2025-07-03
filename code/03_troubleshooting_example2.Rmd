@@ -1,6 +1,6 @@
 ---
 title: "03 Troubleshooting example 2"
-author: "Antonia Netzl"
+author: "Antonia Netzl (an604@cam.ac.uk)"
 date: "2025-07-01"
 output: html_document
 ---

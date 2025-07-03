@@ -1,6 +1,6 @@
 ---
 title: "02 Map Diagnostics I"
-author: "Sam Turner"
+author: "Sam Turner (sat65@cam.ac.uk)"
 date: "2025-06-27"
 output: html_document
 editor_options: 
@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 This session is about checking whether an antigenic map represents our titer data well, and whether our titer data is sufficient to produce a well-resolved antigenic map.
 
-Working code is provided for each section in the file `02_map_diagnostics_1_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
+Working code is provided for each section in the file `02_map_diagnostics_I_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
 
 ### Load the required packages
 
@@ -90,7 +90,7 @@ plot(procrustesMap(map_op_5, map_op_10000))
 
 For this map, it is quite "easy" for the optimizer to find a good configuration, so the optimiser may have actually found the best configuration in only 5 runs. But, for less "well-behaved" datasets, that will likely not be the case — so checking that the stresses have converged is an important thing to do. We can see that the optimiser does not always find the same configuration by looking through the different optimizations in the interactive viewer, by setting the `num_optimizations` argument in `Racmacs::view.acmap` and navigating to "control panel" > "optimizations". Here, it's clear that some of the optimizer runs resulted in different (and substantially worse) map configurations. Try it out:
 
-(Note: you can use the second argument of rotateMapCorrectly to speciy which optimisations to rotate)
+(Note: you can use the second argument of rotateMapCorrectly to specify which optimisations to rotate)
 
 ```{r}
 
@@ -173,17 +173,17 @@ Do you think this value represents a good or poor fit between the map and the da
 
 The assessments above — stress, and the comparison of measured vs fitted titers — are assessments of "goodness-of-fit". That is, they check how closely matched the map is to the data used to make it.
 
-Another valuable way to evaluate a model is cross-validation, which assesses _out-of-sample_ predictive performance. In goodness-of-fit assessments, we use the whole titer table to make a map, and checked whether the map accurately represents those titers. To perform cross-validation, we check how accurrately the map can be used to predict the value of measurements which were not used to produce the map. To achieve this, we:
+Another valuable way to evaluate a model is cross-validation, which assesses _out-of-sample_ predictive performance. In goodness-of-fit assessments, we use the whole titer table to make a map, and check whether the map accurately represents those titers. To perform cross-validation, we check how accurrately the map can be used to predict the value of measurements which were not used to produce the map. To achieve this, we:
 
 1. Randomly split the titer table into two: a "training" titer table, and a "test" titer table.
 
 2. Use the training titers to produce a map
 
-3. For each of the antigen-serum pairs in the test titer table, calculated the titer implied by the map produced from the training titer table, and check how closely it matches the real values in the test titer table.
+3. For each of the antigen-serum pairs in the test titer table, calculate the titer implied by the map produced from the training titer table, and check how closely it matches the real values in the test titer table.
 
 4. Repeat this many times with different random partitions of the data into the training and test data. 
 
-As with goodness-of-fit metrics, we can use cross-validation metrics to assess a single map — this time in terms of an estimate of how accurately we can estimate the titer (or antigenic distance) between antigen-serum pairs for which we do not have measured titers. We've provided a function `crossvalidateMap` in `helpful_functions/crossvalidateMap.R`  Use it to measure the cross-validation error in the SARS-CoV-2 map. What is the standard deviation of the cross-validation residuals? How does it compare to the standard deviation of the residuals when the map was fit to all of the data in the previous task? Can you why one is higher than the other?
+As with goodness-of-fit metrics, we can use cross-validation metrics to assess a single map — this time in terms of an estimate of how accurately we can estimate the titer (or antigenic distance) between antigen-serum pairs for which we do not have measured titers. We've provided a function `crossvalidateMap` in `helpful_functions/crossvalidateMap.R`  Use it to measure the cross-validation error in the SARS-CoV-2 map. What is the standard deviation of the cross-validation residuals? How does it compare to the standard deviation of the residuals when the map was fit to all of the data in the previous task? Can you explain why one is higher than the other?
 
 ```{r}
 source("helpful_functions/crossvalidateMap.R")
@@ -236,7 +236,7 @@ You can see that, in this case, the antigens in the 3D map are mostly arranged i
 
 Much like any other statistic, the positions of variants in an antigenic map have some uncertainty associated with them.
 
-The first practical session introduced one form of uncertainty: geometric uncertainty, which we can assess using the `triangulationBlobs` function. This assesses how flexible the position of an antigen is, by visualising the set of positions an antigen can occupy without subtantially increasing the stress of the map. It is a good starting point for determining if there is enough diversity in the set of antigens and sera you have titrated are sufficient to determine their positions.
+The first practical session introduced one form of uncertainty: geometric uncertainty, which we can assess using the `triangulationBlobs` function. This assesses how flexible the position of an antigen is, by visualising the set of positions an antigen can occupy without substantially increasing the stress of the map. It is a good starting point for determining if there is enough diversity in the set of antigens and sera you have titrated to sufficiently determine their positions.
 
 
 ```{r}
@@ -248,7 +248,7 @@ plot(
 ```
 
 
-Two of the parameters you'll use most often are `grid_spacing`, which controls the smoothness of the "blobs", and `stress_lim`, which sets the amount of stress increase which determines where the edge blob is drawn (analagously to the confidence level for a confidence interval). Try using these parameters, and one other you can find in the function's help page, to draw smoother triangulation blobs which indicate the area each antigen () can occupy without increasing the stress by 2 units:
+Two of the parameters you'll use most often are `grid_spacing`, which controls the smoothness of the "blobs", and `stress_lim`, which sets the amount of stress increase which determines where the edge blob is drawn (analogously to the confidence level for a confidence interval). Try using these parameters, and one other you can find in the function's help page, to draw smoother triangulation blobs which indicate the area each antigen () can occupy without increasing the stress by 2 units:
 
 ```{r}
 plot(
@@ -263,11 +263,11 @@ plot(
 
 Another form of uncertainty comes from random variation in titer values — i.e. the fact that titer values do not come out exactly the same every time when you repeat a particular antigen-serum pair. We can assess this by using a type of [bootstrapping](https://en.wikipedia.org/wiki/Bootstrapping_(statistics)): we intentionally add random noise to the titer values, and produce a map with the noisy titer table. We repeat this many times, and check the distribution of the positions of the antigens across the noisy maps. 
 
-You can use the `bootstrapMap` function in `Racmacs` to perform this analysis. Because this function can also be used to investigate other types of uncertainty, which we will meet later, there are two arguments which we need to set if we want to assess the effect of titer uncertainty only: `method = "noisy"`, `ag_noise_sd = 0` (if this is >0, we'll also be including per-antigen noise — we'll learn about this later). Finally, we need to set `titer_noise_sd` to our best guess of the standard deviation of repeat titers in the assay used to produce our titer table. In our experience, we find the standard deviation for such repeats comes out somewhere near 0.7 — if you haven't performed repeats this is a reasonable place to start. It is a good idea to test a range of values, particualrly if you don't have a measurement for your particular assay — values between 0.5 and 1.0 will probably cover the relevant range.
+You can use the `bootstrapMap` function in `Racmacs` to perform this analysis. Because this function can also be used to investigate other types of uncertainty, which we will meet later, there are two arguments which we need to set if we want to assess the effect of titer uncertainty only: `method = "noisy"`, `ag_noise_sd = 0` (if this is >0, we'll also be including per-antigen noise — we'll learn about this later). Finally, we need to set `titer_noise_sd` to our best guess of the standard deviation of repeat titers in the assay used to produce our titer table. In our experience, we find the standard deviation for such repeats comes out somewhere near 0.7 — if you haven't performed repeats this is a reasonable place to start. It is a good idea to test a range of values, particularly if you don't have a measurement for your particular assay — values between 0.5 and 1.0 will probably cover the relevant range.
 
 Once you have used the `bootstrapMap` function to add the bootstrap information to the map object, use the `bootstrapBlobs` function to calculate the uncertainty intervals. Finally, you can use `plot` or `Racmacs::view` to visualise the intervals. Try drawing 68% (i.e. 1 standard deviation) bootstrap blobs which consider only titer noise, set at a realistic level.
 
-Note that bootstrapping the map requires us to re-optimise the map many times, so is slow. The number of reoptimisaitons is set by the `bootstrap_repeats` parameter — today, we can be lazy with this and set it to 100 to save time — but when doing bootsrapping in "real" analysis, its important to set this to a suitably high number (e.g. 1000). To save time, you can run the bootstrapping, and save the output with `Racmacs::save.acmap`, rather than re-running the boostrapping step every time you run your script.
+Note that bootstrapping the map requires us to re-optimise the map many times, so is slow. The number of reoptimisations is set by the `bootstrap_repeats` parameter — today, we can be lazy with this and set it to 100 to save time — but when doing bootsrapping in "real" analysis, its important to set this to a suitably high number (e.g. 1000). To save time, you can run the bootstrapping, and save the output with `Racmacs::save.acmap`, rather than re-running the boostrapping step every time you run your script.
 
 ```{r}
 
@@ -363,7 +363,7 @@ plot(
 
 ```
 
-Both types of uncertainty interval are now _much_ larger for XBB.1.5 and its relatives, and for JN.1 and its relatives. Notice that the uncertainy intervals are bannana-shaped in the missing-sera map. We can understand this better by looking at the map in the interactive viewer. Open the interactive viewer on the full map with triangulation blobs, then click on the JN.1 antigen, then press ctrl+c to turn on "connection lines". These are lines which connect together antigen-serum pairs for which there is a measurement.
+Both types of uncertainty interval are now _much_ larger for XBB.1.5 and its relatives, and for JN.1 and its relatives. Notice that the uncertainty intervals are banana-shaped in the missing-sera map. We can understand this better by looking at the map in the interactive viewer. Open the interactive viewer on the full map with triangulation blobs, then click on the JN.1 antigen, then press ctrl+c to turn on "connection lines". These are lines which connect together antigen-serum pairs for which there is a measurement.
 
 
 ```{r}
@@ -456,7 +456,7 @@ plot(
 
 # Antigen and serum bootstrap
 
-Above, we have performed a version of bootstrapping which assesses the effect of variance in titration data on the map. There are other factors which affect map confromation though. One of them is the choice of antigens and sera to include and titrate in the map: because the antigenic cartography algorithm can only attempt to satisfy the distances in the map which have been measured, the choice of which to measure affects the final conformation of the map.
+Above, we have performed a version of bootstrapping which assesses the effect of variance in titration data on the map. There are other factors which affect map conformation though. One of them is the choice of antigens and sera to include and titrate in the map: because the antigenic cartography algorithm can only attempt to satisfy the distances in the map which have been measured, the choice of which to measure affects the final conformation of the map.
 
 We can use the "resample" method in the bootstrapMap function to assess this type of uncertainty. Here, rather than adding noise to the titer table, the antigens and sera are randomly resampled (with replacement), to produce a set of titer tables which upweight the contribution of some antigens/sera, and exclude other antigens/sera. As before, we plot "blobs" showing the distribution of antigen and serum positions in the maps which result from these bootstrapped titer tables.
 
@@ -465,7 +465,7 @@ Try running a resample bootstrap on the full SARS-CoV-2 map, and comparing it to
 ```{r, message=FALSE}
 resample_bs = bootstrapMap(
       map_op_10000,
-      method = "noisy",
+      method = "resample",
       bootstrap_repeats = 1000,
       optimizations_per_repeat = 100,
       bootstrap_ags = T,
@@ -507,4 +507,4 @@ plot(
 ```
 
 
-As you can see, the resample boostrap produces wider uncertainty blobs than the noisy boostrap for this map — because it additional incorporates variation stemming from the fact that the different sera "see" the antigens subtley differently (and vice versa), so the choice of antigens and sera to including in the map affects their conformation.
+As you can see, the resample boostrap produces wider uncertainty blobs than the noisy boostrap for this map — because it additionally incorporates variation stemming from the fact that the different sera "see" the antigens subtly differently (and vice versa), so the choice of antigens and sera to include in the map affects its conformation.

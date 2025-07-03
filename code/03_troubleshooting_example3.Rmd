@@ -1,6 +1,6 @@
 ---
 title: "03 Troubleshooting example 3"
-author: "Antonia Netzl"
+author: "Antonia Netzl (an604@cam.ac.uk)"
 date: "2025-06-30"
 output: html_document
 ---
@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 ## Troubleshooting example 3
 
-This is an example based that was previously published in [Rössler, et al. Cell Reports (2025)](https://doi.org/10.1016/j.celrep.2024.115140.) .
+This is a real-world example, previously published in [Rössler, et al. Cell Reports (2025)](https://doi.org/10.1016/j.celrep.2024.115140.) .
 
 
 ```{r load_packages, echo=FALSE}

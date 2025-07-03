@@ -1,6 +1,6 @@
 ---
 title: "01 Map Construction"
-author: "Antonia Netzl"
+author: "Antonia Netzl (an604@cam.ac.uk)"
 date: "2025-06-05"
 output: html_document
 editor_options: 
@@ -50,6 +50,12 @@ invisible(lapply(packages, library, character.only = TRUE))
 #set ggplot2 theme
 theme_set(theme_bw() + 
             theme(strip.background.x = element_blank()))
+
+# set Racmacs option to run on parallel cores
+options(RacOptimizer.num_cores = parallel::detectCores())
+
+# alternatively you can create a .Rprofile file in your home directory ~/ 
+# and put this line in the file: options(RacOptimizer.num_cores = parallel::detectCores())
 ```
 
 ### Load the titer data
@@ -76,8 +82,8 @@ The required input format to construct and antigenic map from titerdata is N(Ant
 
 Antigenic assays are performed by serial dilutions of each serum, incubated with the same amount of virus. To reflect each titer as a single step in the dilution assay, we can apply a log2 transformation to each titer. A single unit difference then represents one dilutionstep (+1 = titer x 2; -1 = titer x 0.5).
 
-Antigenic distances are fold changes from the maximum titer antigen in one serum $s$ to the other antigens $i$ in the same serum. As one Log2 Unit 
-corresponds to one fold change, we can calculate target antigenic distances the following way, applying a 1/10 transformation to each serum to center serum on their maximum titer antigen:
+Antigenic distances are fold changes from the maximum titer antigen in one serum $s$ to the other antigens $i$ in the same serum. As one log2 Unit 
+corresponds to one fold change, we can calculate target antigenic distances the following way, applying a 1/10 transformation to each serum to center the serum on their maximum titer antigen:
 
 $$D_{i,s} = max(log_2(titer_{s}/10)) - log_2(titer_{i,s}/10)$$
 
@@ -91,7 +97,7 @@ represents the log2 titer fold change. The error between the target distance $D_
 
 $$stress = (D_t - d_m)^2$$
 
-The antigenic map algorithm does this transformation of raw titers to Euclidean map distances automatically. **We still urge people to inspect their data before constructing an antigenic map, and think about the positions they expect for each serum and antigen pair**.
+The antigenic map algorithm transforms raw data into a dissimilarity matrix and performs multidimensional scaling (MDS). **We still urge people to inspect their data before constructing an antigenic map, and think about the positions they expect for each serum and antigen pair**.
 
 So, let's visualise the log2 titers and fold changes to each antigen below.
 
@@ -110,7 +116,7 @@ The target antigenic distance for each serum and antigen pair is written at the 
 
 The antigenic map algorithm does transforms raw data into a dissimilarity matrix and performs multidimensional scaling to preserve the relationships within the data to position the points in a lower dimension.
 
-The required input format to construct and antigenic map from titer data is N(Antigens) x N(Sera), with a single row per antigen and a single column per serum. In each cell(antigen, serum) is the specific titer measurement without Log2 transformation.
+The required input format to construct and antigenic map from titer data is N(Antigens) x N(Sera), with a single row per antigen and a single column per serum. In each cell(antigen, serum) is the specific titer measurement without log2 transformation.
 
 Please try and construct a 2D antigenic map with the `Racmacs make.acmap()` function and the `titerdata` object in the correct format. Let's also plot the map and display the map stress and antigen labels, you can find information 
 on the functions on the [Racmacs reference page](https://acorg.github.io/Racmacs/reference/index.html):
@@ -121,7 +127,7 @@ on the functions on the [Racmacs reference page](https://acorg.github.io/Racmacs
 
 
 
-We see that the map stress is 0, so Euclidean map distance and target titer distance match perfectly. The sera (open squares) are at the exact same location as their highest titer antigens (colored spheres). We can change the order of points and plot sera on top of their antigens:
+In the lower left corner we see that the map stress is 0, so Euclidean map distance and target titer distance match perfectly. The sera (open squares) are at the exact same location as their highest titer antigens (colored spheres). We can change the order of points and plot sera on top of their antigens:
 
 ```{r}
 
@@ -161,7 +167,7 @@ Try on your own:
 ```{r}
 ```
 
-Optimize map in Racmacs Viewer with Error Lines on. Error lines indicate the error per serum and antigen pair: Blue lines indicate that the error would be reduced if the pair was closer to each other than their current position ("pull") and red lines indicate the opposite ("red").
+We can look at an example optimization run in the interactive Racmacs Viewer with Error Lines on. Error lines indicate the error per serum and antigen pair: Blue lines indicate that the error would be reduced if the pair was closer to each other than their current position ("pull") and red lines indicate the opposite ("push").
 
 To do that, move to the "Diagnostics" tab, activate the second panel to the right with the "E". Then click on the second panel to the left, which randomizes point position. 
 
@@ -170,19 +176,19 @@ What does this do with the map stress? What does this do to the error lines?
 Then click on the "Relax map" panel on the left, which optimizes the map. What happens?
 
 ```{r}
-Racmacs::view(map)
+Racviewer(map)
 ```
 
 ### Point triangulation
 
-To assess how well triangulated each point in the map is, we can use the `triangulationBlobs()` function. It calculates the position each point can occupy in the map without increasing the map stress by more than a user specified unit. A bigger area indicates that a point's position is more flexible given the data, and it's positition is not well resolved.
+To assess how well triangulated each point in the map is, we can use the `triangulationBlobs()` function. It calculates the position each point can occupy in the map without increasing the map stress by more than a user specified unit (`stress_lim`). A bigger area indicates that a point's position is less triangulated by the given data, and its position is not well resolved.
 
 
 # Noisy data
 
 Above, we were dealing with data where the titer distances can be perfectly represented in two dimensions. Now, we will do the same with more realistic, noisy data to examine how this translates to an antigenic map.
 
-To generate the more noisy dataset, we assume the following: individual sera can have high or low reactivity, which translates to higher or lower titers against all antigens. In addition, for each measurement we assume that normally distributed noise is part of the measured titer. 
+To generate the noisy dataset, we assume the following: individual sera can have high or low reactivity, which translates to higher or lower titers against all antigens. In addition, for each measurement we assume that normally distributed noise is part of the measured titer. 
 
 The actual logtiter against antigen $i$ measured in serum $s$ is therefore 
 
@@ -227,7 +233,9 @@ We can plot the noisy data:
 
 ```
 
-The data is distributed around the mean, which still resembles the true mean we used as original input. Now, there are data points which are below the artifical limit of detection of 20 (LOD). **The antigenic cartography algorithm handles <LOD titers by allowing the distance between antigen and serum to be greater than the distance from maximum titer to threshold without any penalties. To do that, we have to set titers <20 to "<20" in the titer table**:
+The data is distributed around the mean, which still resembles the true mean we used as original input. Now, there are data points which are below the artificial limit of detection of 20 (LOD). 
+
+**The antigenic cartography algorithm handles <LOD titers by allowing the distance between antigen and serum to be greater than the distance from maximum titer to threshold without any penalties. To do that, we have to set titers <20 to "<20" in the titer table**::
 
 
 ```{r}
@@ -281,9 +289,10 @@ Let's style the map the same as the previous map:
 
 
 
-We see that the sera are still centered around their homologous variant in most cases, indicating that their titers are highest against this variant. But sera that have low fold changes move, i.e. low antigenic distances from maximum titer antigen to the others, move to the center of the antigenic map. Sera with highly specific titers, i.e. high titers against a single antigen and low titers against the others, move to the periphery of the map area closest to their highest titer antigen.
+We see that the sera are still centered around their homologous variant in most cases, indicating that their titers are highest against this variant. But sera that have low fold changes, i.e. low antigenic distances from maximum titer antigen to the others, move to the center of the antigenic map. Sera with highly specific titers, i.e. high titers against a single antigen and low titers against the others, move to the periphery of the map area closest to their highest titer antigen.
 
-We can look at the effect of <LOD on titer error in the Racmacs' Viewer, by selecting individual sera and moving them (rightmost panel):
+We can look at the effect of noise on titer error in the Racmacs' Viewer, either by looking at the error lines 
+like before or by coloring the points by map stress in the "Coloring" panel:
 
 ```{r}
 RacViewer(map_noisy)
@@ -327,11 +336,11 @@ We can also look at which sera are the ones that get `NA` coordinates, meaning t
 ```
 
 
-In all cases, at least 2 of the three antigens are <LOD. There is too little information in the data to triangulate the points in 2 dimensions.
+In all cases, at least 2 of the three antigens are <LOD. There is too little information in the data to triangulate these points in 2 dimensions.
 
 ## SARS-CoV-2 map
 
-Above, we have been using quite "unrealistic" simulated data. Now, we'll produce and style a map using more a titer table which looks more like something you might produce in practice, containing a selection of SARS-CoV-2 antigens, and three sera raised against each antigen (with the repeat number provided after the underscore in the serum name). We'll also use this map later on in the map diagnostics session.
+Above, we have been using quite "unrealistic" simulated data. Now, we'll produce and style a map using a titer table which looks more like something you might produce in practice, containing a selection of SARS-CoV-2 antigens, and three sera raised against each antigen (with the repeat number provided after the underscore in the serum name). We'll also use this map later on in the map diagnostics session.
 
 Read in the titer table, `data/titerdata/01_sars_cov_2_titerdata.csv`":
 ```{r}

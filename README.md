@@ -23,8 +23,10 @@ on your device.
 
 We also recommend installing RStudio as it provides an accessible user interface: https://posit.co/products/open-source/rstudio/
 
-Once you have both install, please open a session in RStudio and run the script `code/00_installation.R` to install all 
+Once you have everything installed, please open a session in RStudio and run the script `code/00_installation.R` to install all 
 packages that we will be using throughout the workshop.
+
+For a python interface to Racmacs, please follow the instructions here: https://github.com/iAvicenna/PyRacmacs 
 
 ## During the workshop
 
