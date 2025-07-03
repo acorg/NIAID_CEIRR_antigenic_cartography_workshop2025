@@ -16,7 +16,7 @@ Python wrapper around
 out everything efficiently [rpy2](https://rpy2.github.io/) is used,
 which facilitates conversion between R objects and Python objects. So in
 essence you will be using RMarkdown to call Python to call R again to
-use a R package. So this package is not really meant to be used in
+use a R package. This package is not really meant to be used in
 RMarkdown context (but we will nevertheless do so to keep the lecture
 content uniform). If you are normally using R and RStudio, you are
 better off using native Racmacs. But PyRacmacs is for you if you are
@@ -41,8 +41,10 @@ examples](https://github.com/iAvicenna/PyRacmacs/tree/main/examples)
 ```{r setup, include=FALSE}
 library(reticulate)
 # this should be the path to your own environment's Python where rpy2 is installed
-# see the link above
-use_python("/home/avicenna/miniconda3/envs/ACORG/bin/python") 
+# see the link above. For linux it will be something of the form
+# /home/USERNAME/miniconda3/envs/ENVNAME/bin/python
+# where capitalized parts need to be changed by the user
+use_python("/home/USERNAME/miniconda3/envs/ENVNAME/bin/python") 
 ```
 
 ```{python}
@@ -52,8 +54,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # insert the location of PyRacmacs or add it to your environment 
-# variables
-sys.path.insert(0, "/home/avicenna/Dropbox/local_packages/AELAB/PyRacmacs/")
+# variables. If you download it to your downloads it will be something
+# like
+sys.path.insert(0, "PATH_TO_PYRACMACS")
 
 import PyRacmacs as pr
 
