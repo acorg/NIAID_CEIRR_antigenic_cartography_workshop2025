@@ -1,0 +1,94 @@
+---
+title: "00 Extra - PyRacmacs: a Python Racmacs Wrapper"
+author: "Sina Tureli (st757@cam.ac.uk)"
+date: '2025-07-03'
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+This document shows the basic utilities of PyRacmacs. PyRacmacs is a
+Python wrapper around
+[Racmacs](https://acorg.github.io/Racmacs/index.html) In order to carry
+out everything efficiently [rpy2](https://rpy2.github.io/) is used,
+which facilitates conversion between R objects and Python objects. So in
+essence you will be using RMarkdown to call Python to call R again to
+use a R package. This package is not really meant to be used in
+RMarkdown context (but we will nevertheless do so to keep the lecture
+content uniform). If you are normally using R and RStudio, you are
+better off using native Racmacs. But PyRacmacs is for you if you are
+more used to Python syntax and therefore more productive with it or you
+want to use a very specific functionality like piecewise procrustes
+that exists in PyRacmacs but not in Racmacs.
+
+If you are interested, after having a look at these notes, try to run
+PyRacmacs within a native Python editor of your choice such as
+[Spyder](https://www.spyder-ide.org/).
+
+See the main page below on how to install rpy2 in a Conda environment
+and point it to the base r.
+
+[PyRacmacs](https://github.com/iAvicenna/PyRacmacs/tree/main/)
+
+See the link below for more examples on usage
+
+[PyRacmacs
+examples](https://github.com/iAvicenna/PyRacmacs/tree/main/examples)
+
+```{r setup, include=FALSE}
+library(reticulate)
+# this should be the path to your own environment's Python where rpy2 is installed
+# see the link above. For linux it will be something of the form
+# /home/USERNAME/miniconda3/envs/ENVNAME/bin/python
+# where capitalized parts need to be changed by the user
+use_python("/home/USERNAME/miniconda3/envs/ENVNAME/bin/python") 
+```
+
+```{python}
+import sys
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# insert the location of PyRacmacs or add it to your environment 
+# variables. If you download it to your downloads it will be something
+# like
+sys.path.insert(0, "PATH_TO_PYRACMACS")
+
+import PyRacmacs as pr
+
+table1 = pd.read_csv("../data/titerdata/03_hemisphering_lab1.csv", 
+                     index_col=0, header=0)
+racmap1 = pr.make_map_from_table(table1, dilution_stepsize=1, number_of_optimizations=2000)
+
+pr.view(racmap1)
+
+table2 = pd.read_csv("../data/titerdata/03_hemisphering_lab2_repeat.csv", 
+                     index_col=0, header=0)
+racmap2 = pr.make_map_from_table(table2, dilution_stepsize=1, number_of_optimizations=4000)
+
+pr.procrustes_maps(racmap2, racmap1)
+
+data = pr.procrustes_data(racmap1, racmap2)
+print(f"procrustes distance: {data['total_rmsd']:.2f}")
+
+# piecewise procrustes can match multiple pieces together resulting
+# in smaller distance. this is not available in regular Racmacs
+result = pr.piecewise_procrustes(racmap1, racmap2, 2, num_cpus=6,
+                                 metric="sd")
+
+fig,ax = plt.subplots(1, 1, figsize=(5,5))
+ax.plot(np.sqrt(np.array(result[-1])[:500]/(racmap1.shape[0]+racmap1.shape[1])),
+        label="Piecewise Procrustes Distance")
+ax.scatter(0, data["total_rmsd"], label="Procrustes Distance", marker='x',
+           color="tab:red")
+ax.set_xlabel("Iteration")
+ax.set_ylabel("Mean Squared Distance")
+ax.grid("on", alpha=0.2)
+ax.legend()
+plt.show(fig)
+
+```
