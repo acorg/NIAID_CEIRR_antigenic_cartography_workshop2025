@@ -20,13 +20,13 @@ knitr::opts_chunk$set(echo = TRUE,
 
 
 
-Working code is provided for each section in the file `03_troubleshooting_example1_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
+Working code is provided for each section in the file `03_troubleshooting_ex6_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
 
 ### Load the required packages
 
 We will be using the ['tidyverse'](https://www.tidyverse.org) family of packages for manipulating and plotting titer data, and the [`Racmacs`](https://acorg.github.io/Racmacs/index.html) package for constructing and plotting antigenic maps.
 
-```{r load_packages, echo = FALSE}
+```{r load_packages}
 # Package names
 packages <- c("Racmacs", "tidyverse")
 
@@ -64,13 +64,7 @@ Write a function which takes a single argument, `acmap`, and returns triangulati
 
 ```{r, message=FALSE}
 triangulate_function = function(acmap){
-  triangulationBlobs(
-    acmap,
-    stress_lim = 1.5,
-    grid_spacing = 0.05,
-    antigens = T,
-    sera = T
-    )
+  # your code
 }
 ```
 
@@ -82,25 +76,7 @@ Write a function which takes a single argument, `acmap`, and returns noisy boots
 
 ```{r, message=FALSE}
 noisy_boostrap_function = function(acmap){
-  
-  bs = bootstrapMap(
-    acmap,
-    "noisy",
-    bootstrap_repeats = 100,
-    optimizations_per_repeat = 100,
-    ag_noise_sd = 0,
-    titer_noise_sd = 0.7,
-    bootstrap_ags = T,
-    bootstrap_sr = T
-  )
-  
-  bb = bootstrapBlobs(
-    bs,
-    conf.level = 0.75,
-    gridspacing = 0.05
-    )
-  
-  bb
+  # your code
 }
 ```
 
@@ -187,34 +163,11 @@ Test out different selections of sera, and see what effect they have on the map 
 
 Note: you can copy + paste this code cell so you don't delete your previous output when testing a new serum combination.
 
-
 ```{r, message=FALSE}
-
-# There is no "right" answer here, but a sensible selection is one which covers the whole antigenic space of the antigens. For example:
 
 checkMap15(
   c(
-    "Wu1_1",
-    "Wu1_2",
-    "Wu1_3",
-    
-    "B.1.621_1",
-    "B.1.621_2",
-    
-    "BA.2_1",
-    "BA.2_2",
-    
-    "BA.5_1",
-    "BA.5_2",
-    
-    "XBB.1.5_1",
-    "XBB.1.5_2",
-    
-    "JN.1_1",
-    "JN.1_2",
-    
-    "KP.3.1.1_1",
-    "KP.3.1.1_2"
+  # your choice of sera
   ),
   triangulate_function = triangulate_function,
   noisy_boostrap_function = noisy_boostrap_function
@@ -228,27 +181,13 @@ What about if you have capacity for only 8 sera? Use `checkMap8` to investigate:
 ```{r, message=FALSE}
 
 checkMap8(
-   c(
-    "Wu1_1",
-    "Wu1_2",
-    
-    "B.1.621_1",
-    
-    "BA.2_1",
-    
-    "BA.5_1",
-    
-    "XBB.1.5_1",
-    
-    "JN.1_1",
-    
-    "KP.3.1.1_1"
+  c(
+  # your choice of sera
   ),
   triangulate_function = triangulate_function,
   noisy_boostrap_function = noisy_boostrap_function
 )
 
-# Note that this solution does not have repeats of the same antigen, to try to maximise the antigenic diversity of the sera. Of course, there may be very good non-cartography reasons to have repeats.
-
 ```
+
 

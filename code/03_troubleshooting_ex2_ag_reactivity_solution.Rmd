@@ -18,9 +18,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.align = "center")
 ```
 
-
-
-Working code is provided for each section in the file `03_troubleshooting_exampleX_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
+Working code is provided for each section in the file `03_troubleshooting_ex2_ag_reactivity_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
 
 ### Load the required packages
 
@@ -49,15 +47,26 @@ source(here::here("internal", "code", "03_troubleshooting_example1_setup.R"))
 In this exercise, we will be investigating an antigenic map which has an unusual property...
 
 Load in the map `data/maps/03_sars_cov_2_map_reactivity.ace` as `new_map`, and the map you produced in the first practical session, `data/maps/01_sars_cov_2_map.ace`, as `original_map`:
-
-```{r}
-
+  
+  ```{r}
+new_map = read.acmap("../data/maps/03_sars_cov_2_map_reactivity.ace")
+original_map = read.acmap("../data/maps/01_sars_cov_2_map.ace")
 ```
 
 Set the serum outline using the same colors as the antigens, from `data/other/01_sars_cov_2_antigen_colors.RDS` and the `Racmacs::srOutline` function. Plot the two maps side by side. What looks unusual about the new map?
+  
+  ```{r}
+variant_colors = readRDS("../data/other/01_sars_cov_2_antigen_colors.RDS")
 
-```{r}
+srOutline(new_map) = variant_colors[map_chr(str_split(srNames(new_map), fixed("_")), 1)]
+srOutlineWidth(new_map) = 2
 
+srOutline(original_map) = variant_colors[map_chr(str_split(srNames(original_map), fixed("_")), 1)]
+srOutlineWidth(original_map) = 2
+
+par(mfrow = c(1, 2), mai = rep(0.1, 4))
+plot(new_map, margins = NULL)
+plot(original_map, margins = NULL)
 ```
 
 The sera in the new map are often quite far away from their homologous antigen. We'd expect antigens and their homologous sera to be near each other in antigenic space, because the homologous antigen typically have the highest, or near the highest, titers for a serum.
@@ -72,7 +81,90 @@ What do you notice about the BA.5 titer?
 
 ```{r, fig.width=10}
 
+plot_titers = function(titers){
+  longtiters = titers %>%
+  as_tibble(rownames = "antigen") %>%
+  pivot_longer(
+    cols = -antigen,
+    names_to = "serum",
+    values_to = "titer"
+  ) %>%
+  separate_wider_delim(
+    serum,
+    "_",
+    names = c("serum_variant", "serum_repeat")
+  ) %>%
+  mutate(
+    antigen = factor(antigen, agNames(map)),
+    serum_variant = factor(serum_variant, agNames(map)),
+    titer_thresholded = str_detect(titer, fixed("<")),
+    titer_numeric = as.numeric(str_remove(titer, fixed("<"))),
+    plottiter_numeric = ifelse(
+      titer_thresholded,
+      titer_numeric / 2,
+      titer_numeric
+    )
+  ) %>%
+  group_by(serum_variant, serum_repeat) %>%
+  mutate(max_titer = titer_numeric == max(titer_numeric))
 
+plot = ggplot(longtiters) +
+  annotate(
+    geom = "rect",
+    color = NA,
+    fill = "grey90",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = 10*2**0,
+    ymax = 10*2**1.5
+  ) +
+  annotate(
+    geom = "rect",
+    color = NA,
+    xmin = which(agNames(new_map) == "BA.5") - 0.5,
+    xmax = which(agNames(new_map) == "BA.5") + 0.5,
+    ymin = 10*2**0,
+    ymax = 10*2**10,
+    fill = "red",
+    alpha = 0.1
+  ) +
+  geom_line(
+    aes(
+      x = antigen,
+      y = plottiter_numeric,
+      group = interaction(serum_variant, serum_repeat)
+    ),
+    color = "grey50"
+  ) +
+  geom_point(
+    aes(
+      x = antigen,
+      y = plottiter_numeric,
+      color = max_titer
+    )
+  ) +
+  scale_y_continuous(
+    trans = "log2",
+    breaks = 10*(2**(1:10)),
+    labels = c("<40", 10*(2**(2:10))),
+    limits = 10*2**c(0, 11),
+    expand = c(0, 0)
+  ) +
+  scale_color_manual(
+    values = c("TRUE" = "red", "FALSE" = "grey50"),
+    name = "Max titer\nfor serum"
+  ) +
+  theme_minimal() +
+  facet_wrap(~serum_variant) +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)
+  )
+
+plot
+}
+
+plot_titers(titerTable(new_map))
 ```
 
 The titers are quite high for the BA.5 antigen: in fact, the BA.5 titer is often substantially higher than the titer to the closely related BF.7 and BQ.1.1 antigens.
@@ -88,20 +180,46 @@ This case is thankfully quite straightforward: there is no good biological reaso
 First, was can interactively explore the effect of different reactivity adjustments on the map using the interactive viewer. Open up the interactive viewer on the `new_map`. Navigate to "control panel" > "diagnostics". Click the left-most icon, "Relax max points". Select the BA.5 antigen. You can now adjust the reactivity of the antigen — moving all of the titers for the antigen up or down — in the control panel, and the map will be updated in real time. Try a few different values, and notice how it affects the map and the stress value in the bottom left. A lower stress value after adjsuting the reactivity suggests that the new titers for the antigen are more consistent with the antigenic relationships implied by the rest of the titer table.
 
 ```{r}
-
+Racmacs::view(new_map)
 ```
 
 
 You can also manually set reactivity values in the map object, using `Racmacs::agReactivityAdjustments`. You'll need to reoptimize the map once you've set a reactivity adjustment. Use the interactive viewer above to choose a value, and try setting it with `Racmacs::agReactivityAdjustments`:
 
 ```{r}
+source("helpful_functions/rotateMapCorrectly.R")
+new_map_reactivity_manual = new_map
 
+adjustments = rep(0, length(agNames(new_map_reactivity_manual)))
+adjustments[agNames(new_map_reactivity_manual) == "BA.5"] = -2.5
+Racmacs::agReactivityAdjustments(new_map_reactivity_manual) = adjustments
+
+new_map_reactivity_manual = optimizeMap(new_map_reactivity_manual, 2, 1000) %>%
+  rotateMapCorrectly()
+
+plot(new_map_reactivity_manual)
 
 ```
 
 One of the heuristics we consider — and you might have considered when choosing a reactivity value above — is to choose a value which minimizes the stress. We can also do this automatically, with the `Racmacs::optimizeAgReactivity` function. Try using to optimize the reactivity of BA.5, holding other reactivity adjustments at 0 (check the help page for the function!):
 
 ```{r}
+new_map_reactivity_auto = new_map
+
+adjustments = rep(0, length(agNames(new_map_reactivity_auto)))
+adjustments[agNames(new_map_reactivity_auto) == "BA.5"] = NA
+
+new_map_reactivity_auto = Racmacs::optimizeAgReactivity(
+  new_map_reactivity_auto, 
+  fixed_ag_reactivities = adjustments
+  )
+
+agReactivityAdjustments(new_map_reactivity_auto)
+
+new_map_reactivity_auto = optimizeMap(new_map_reactivity_auto, 2, 1000) %>%
+  rotateMapCorrectly()
+
+plot(new_map_reactivity_auto)
 
 ```
 
@@ -111,6 +229,11 @@ Of course, Racmacs::optimizeAgReactivity only considers stress in the map. There
 
 ```{r, fig.width=10}
 
+titers = adjustedTiterTable(new_map_reactivity_auto)
+
+plot_titers(titers)
+
+plot
 ```
 
 
@@ -119,8 +242,8 @@ Of course, Racmacs::optimizeAgReactivity only considers stress in the map. There
 We've just looked at an example where one antigen clearly has substantially higher reactivity than the others. The existence of such antigens suggests that there are probably also smaller reactivity differences between other antigens, which are not so obvious to spot. Per-antigen reactivity differences are therefore another form of uncertainty / variation in titers, which we have not yet accounted for when making the bootstrap blobs.
 
 Recall in the "noisy" bootstrap, we set two parameters: 
-
-1. `titer_noise_sd`, which we set to ~0.7
+  
+  1. `titer_noise_sd`, which we set to ~0.7
 2. `ag_noise_sd`, which we set to 0
 
 The `titer_noise_sd` parameter controlled how much noise is added on a per-titer basis in the bootstrap repeats.
@@ -129,9 +252,47 @@ We can use the `ag_noise_sd` parameter to add noise on a _per-antigen_ basis. By
 
 
 Plot the original map, `data/maps/01_sars_cov_2_map.ace`, and side by side with two noisy bootstaps: one which has per-titer noise only, and a second which also has per-antigen noise (remember the `bootstrapMap` and `bootstrapBlobs` functions!):
-
+  
 ```{r}
+original_map = read.acmap("../data/maps/01_sars_cov_2_map.ace")
 
+per_titer_bs = bootstrapMap(
+  original_map,
+  method = "noisy",
+  bootstrap_repeats = 100,
+  reoptimize = T,
+  titer_noise_sd = 0.7,
+  ag_noise_sd = 0.,
+  optimizations_per_repeat = 50
+)
+
+per_titer_bb = bootstrapBlobs(
+  per_titer_bs, 
+  conf.level = 0.68, 
+  gridspacing = 0.1
+)
+
+per_antigen_bs = bootstrapMap(
+  original_map,
+  method = "noisy",
+  bootstrap_repeats = 100,
+  reoptimize = T,
+  titer_noise_sd = 0.7,
+  ag_noise_sd = 0.7,
+  optimizations_per_repeat = 50
+)
+
+per_antigen_bb = bootstrapBlobs(
+  per_antigen_bs, 
+  conf.level = 0.68, 
+  gridspacing = 0.1
+)
+
+
+par(mfrow = c(1, 3), mai = rep(0.1, 4))
+plot(original_map, margins = NULL)
+plot(per_titer_bb, margins = NULL)
+plot(per_antigen_bb, margins = NULL)
 
 ```
 
