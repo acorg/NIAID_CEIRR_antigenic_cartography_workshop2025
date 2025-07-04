@@ -267,17 +267,17 @@ You can use the `bootstrapMap` function in `Racmacs` to perform this analysis. B
 
 Once you have used the `bootstrapMap` function to add the bootstrap information to the map object, use the `bootstrapBlobs` function to calculate the uncertainty intervals. Finally, you can use `plot` or `Racmacs::view` to visualise the intervals. Try drawing 68% (i.e. 1 standard deviation) bootstrap blobs which consider only titer noise, set at a realistic level.
 
-Note that bootstrapping the map requires us to re-optimise the map many times, so is slow. The number of reoptimisations is set by the `bootstrap_repeats` parameter — today, we can be lazy with this and set it to 100 to save time — but when doing bootsrapping in "real" analysis, its important to set this to a suitably high number (e.g. 1000). To save time, you can run the bootstrapping, and save the output with `Racmacs::save.acmap`, rather than re-running the boostrapping step every time you run your script.
+Note that bootstrapping the map requires us to re-optimise the map many times, so is slow. We set the number of bootstrap repeats using the `bootstrap_repeats` parameter, and the number of reoptimisations to run per repeat using the `optimizations_per_repeat`. Today, we'll be lazy with these, and set them each to 100 to save time. But when doing bootsrapping "for real", it's important to set these parameters suitably high (e.g. 1000 bootstrap repeats, and enough optimisations to reliably find the optimum, as we discussed above). To save time, you can run the bootstrapping, and save the output with `Racmacs::save.acmap`, rather than re-running the boostrapping step every time you run your script.
 
 ```{r}
 
 bs_map_op_10000 = bootstrapMap(
   map_op_10000,
   method = "noisy",
-  bootstrap_repeats = 1000,
+  bootstrap_repeats = 100,
+  optimizations_per_repeat = 100,
   ag_noise_sd = 0,
-  titer_noise_sd = 0.7,
-  reoptimize = F
+  titer_noise_sd = 0.7
   )
 
 bb_map_op_10000 = bootstrapBlobs(
@@ -320,8 +320,8 @@ plot(
       "noisy",
       ag_noise_sd = 0,
       titer_noise_sd = 0.7,
-      bootstrap_repeats = 1000,
-      reoptimize = F
+      bootstrap_repeats = 100,
+      optimizations_per_repeat = 100
     ), 
     gridspacing = 0.05
   ),
@@ -422,11 +422,11 @@ boot_fullmap = bootstrapBlobs(
     method = "noisy",
     ag_noise_sd = 0,
     titer_noise_sd = 0.7,
-    bootstrap_repeats = 1000,
-    reoptimize = F
-  ), 
-    gridspacing = 0.05
-    )
+    bootstrap_repeats = 100,
+    optimizations_per_repeat = 100
+  ),
+  gridspacing = 0.05
+)
 
 boot_notrip = bootstrapBlobs(
   bootstrapMap(
@@ -434,11 +434,11 @@ boot_notrip = bootstrapBlobs(
     method = "noisy",
     ag_noise_sd = 0,
     titer_noise_sd = 0.7,
-    bootstrap_repeats = 1000,
-    reoptimize = F
-  ), 
-    gridspacing = 0.05
-    )
+    bootstrap_repeats = 100,
+    optimizations_per_repeat = 100
+  ),
+  gridspacing = 0.05
+)
 
 par(mfrow = c(1, 2), mai = rep(0.1, 4))
 

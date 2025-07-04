@@ -86,10 +86,10 @@ noisy_boostrap_function = function(acmap){
   bs = bootstrapMap(
     acmap,
     "noisy",
-    bootstrap_repeats = 1000,
+    bootstrap_repeats = 100,
+    optimizations_per_repeat = 100,
     ag_noise_sd = 0,
     titer_noise_sd = 0.7,
-    reoptimize = F,
     bootstrap_ags = T,
     bootstrap_sr = T
   )
