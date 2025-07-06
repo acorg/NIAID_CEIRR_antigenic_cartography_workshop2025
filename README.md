@@ -34,5 +34,8 @@ The code for each session is in the `code` directory and numbered. We will provi
 session in the same directory with the appendix `_solution.Rmd` but encourage 
 participants to try each task by themselves first. 
 
+### Workshop agenda
+
+![Workshop agenda July 2025](internal/workshop_agenda.png)
 
 
