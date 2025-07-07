@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 
 
-Working code is provided for each section in the file `03_troubleshooting_example1_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
+Working code is provided for each section in the file `03_troubleshooting_ex6_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
 
 ### Load the required packages
 
@@ -86,10 +86,10 @@ noisy_boostrap_function = function(acmap){
   bs = bootstrapMap(
     acmap,
     "noisy",
-    bootstrap_repeats = 1000,
+    bootstrap_repeats = 100,
+    optimizations_per_repeat = 100,
     ag_noise_sd = 0,
     titer_noise_sd = 0.7,
-    reoptimize = F,
     bootstrap_ags = T,
     bootstrap_sr = T
   )
