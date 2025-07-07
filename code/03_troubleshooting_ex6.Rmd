@@ -19,7 +19,6 @@ knitr::opts_chunk$set(echo = TRUE,
 ```
 
 
-
 Working code is provided for each section in the file `03_troubleshooting_ex6_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
 
 ### Load the required packages
@@ -67,7 +66,6 @@ triangulate_function = function(acmap){
   # your code
 }
 ```
-
 
 
 2. a function which takes an antigenic map and returns noisy bootstrap blobs which are ready to be plotted (i.e. the function should not call `plot`)
