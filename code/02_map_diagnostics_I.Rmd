@@ -44,7 +44,7 @@ theme_set(theme_bw() +
 ```
 
 
-## Convergence of stress values: how do we know that we have run enough optimisations?
+# Convergence of stress values: how do we know that we have run enough optimisations?
 
 In the first session, we chose to run 1000 repeat optimisations by setting `number_of_optimizations` to 1000. That sounds like a lot, but how do we know if it is enough to find the best antigenic map for a titertable? One way to get some reassurance that we have run enough optimisations is to look at the distribution of stresses of our optimisations. If the lowest stress value among our optimisation runs has been achieved by many different optimisation runs, we can be _somewhat_ confident that we have found the best configuration, or something close to it. If, on the other hand, the lowest stress run is a one-off, its quite likely that we'd find a better map if we run more optimisations. 
 
@@ -64,6 +64,7 @@ Now run 10,000 optimisations. Look at the stress values for the first 50 optimis
 
 
 ```{r}
+
 ```
 
 We can check how much of an issue it would have been if we skimped on the number of optimizations by plotting a procrustes of or 5-times optimised map against our 10000-times optimised map. Did it make a big difference?
@@ -80,7 +81,7 @@ For this map, it is quite "easy" for the optimizer to find a good configuration,
 
 ```
 
-## Comparing map and table distances & titers
+# Comparing map and table distances & titers
 
 The stress values having converged can give us some confidence that we've found something close to the best possible cartographic representation of the titer data. However, it is possible that this representation is still quite poor: it may be the case that there is _no_ good cartographic representation of a particular set of titer data — if, for example, the data implies antigenic relationships between variants which do not "fit" in Euclidean space.
 
@@ -100,7 +101,6 @@ We've provided a function, `getFittedTiters`, in the file `helpful_functions/get
 
 ```{r}
 
-
 ```
 
 What is the standard deviation of the difference between the fitted and measured log-titers? 
@@ -113,7 +113,7 @@ Do you think this value represents a good or poor fit between the map and the da
 (Note: a useful number to know here is that the standard deviation in technical repeats is generally about 0.7 log2 units)
 
 
-## Cross validation and dimensionality
+# Cross validation and dimensionality
 
 The assessments above — stress, and the comparison of measured vs fitted titers — are assessments of "goodness-of-fit". That is, they check how closely matched the map is to the data used to make it.
 
@@ -158,11 +158,11 @@ You can also use `procrustesMap` to compare the 3D map to a 2D map. Try it out (
 You can see that, in this case, the antigens in the 3D map are mostly arranged in a 2D plane anyway — even though they would be allowed to venture into the 3rd dimension if it reduced the map stress.
 
 
-## Assessing map uncertainty
+# Assessing map uncertainty
 
 Much like any other statistic, the positions of variants in an antigenic map have some uncertainty associated with them.
 
-The first practical session introduced one form of uncertainty: geometric uncertainty, which we can assess using the `triangulationBlobs` function. This assesses how flexible the position of an antigen is, by visualising the set of positions an antigen can occupy without substantially increasing the stress of the map. It is a good starting point for determining if there is enough diversity in the set of antigens and sera you have titrated are sufficient to determine their positions.
+The first practical session introduced one form of uncertainty: geometric uncertainty, which we can assess using the `triangulationBlobs` function. This assesses how flexible the position of an antigen is, by visualising the set of positions an antigen can occupy without substantially increasing the stress of the map. It is a good starting point for determining if there is enough diversity in the set of antigens and sera you have titrated to sufficiently determine their positions.
 
 
 ```{r}
@@ -182,7 +182,7 @@ You can use the `bootstrapMap` function in `Racmacs` to perform this analysis. B
 
 Once you have used the `bootstrapMap` function to add the bootstrap information to the map object, use the `bootstrapBlobs` function to calculate the uncertainty intervals. Finally, you can use `plot` or `Racmacs::view` to visualise the intervals. Try drawing 68% (i.e. 1 standard deviation) bootstrap blobs which consider only titer noise, set at a realistic level.
 
-Note that bootstrapping the map requires us to re-optimise the map many times, so is slow. The number of reoptimisations is set by the `bootstrap_repeats` parameter — today, we can be lazy with this and set it to 100 to save time — but when doing bootsrapping in "real" analysis, its important to set this to a suitably high number (e.g. 1000). To save time, you can run the bootstrapping, and save the output with `Racmacs::save.acmap`, rather than re-running the boostrapping step every time you run your script.
+Note that bootstrapping the map requires us to re-optimise the map many times, so is slow. We set the number of bootstrap repeats using the `bootstrap_repeats` parameter, and the number of reoptimisations to run per repeat using the `optimizations_per_repeat`. Today, we'll be lazy with these, and set them each to 100 to save time. But when doing bootsrapping "for real", it's important to set these parameters suitably high (e.g. 1000 bootstrap repeats, and enough optimisations to reliably find the optimum, as we discussed above). To save time, you can run the bootstrapping, and save the output with `Racmacs::save.acmap`, rather than re-running the boostrapping step every time you run your script.
 
 ```{r}
 
@@ -201,7 +201,7 @@ First, plot triangulation and noisy bootstrap blobs for the "full" map:
 
 Notice that both types of uncertainty interval are fairly small and round — particularly for the antigens. This generally indicates a well coordinated map, because it means you can't move any of the points very far without substantially increasing the stress. Another way of saying this is that the position of all of the antigens are constrained, in every direction, by needing to satisfy a reasonable number of data points (titer values).
 
-# Fewer serum groups
+### Fewer antigenically distinct serum groups
 
 What if we hadn't raised sera against XBB.1.5, JN.1, and KP.3.1.1? Read in the map `data/maps/02_sars_cov_2_map_missing.ace`, and check wich sera are included in the map. Then plot triangulation blobs for the antigens in this map. How do they compare to the full map above?
 
@@ -212,7 +212,7 @@ Note: the map has already been optimized and rotated.
 
 ```
 
-Both types of uncertainty interval are now _much_ larger for XBB.1.5 and its relatives, and for JN.1 and its relatives. Notice that the uncertainy intervals are banana-shaped in the missing-sera map. We can understand this better by looking at the map in the interactive viewer. Open the interactive viewer on the full map with triangulation blobs, then click on the JN.1 antigen, then press ctrl+c to turn on "connection lines". These are lines which connect together antigen-serum pairs for which there is a measurement.
+Both types of uncertainty interval are now _much_ larger for XBB.1.5 and its relatives, and for JN.1 and its relatives. Notice that the uncertainty intervals are banana-shaped in the missing-sera map. We can understand this better by looking at the map in the interactive viewer. Open the interactive viewer on the full map with triangulation blobs, then click on the JN.1 antigen, then press ctrl+c to turn on "connection lines". These are lines which connect together antigen-serum pairs for which there is a measurement.
 
 
 ```{r}
@@ -242,7 +242,7 @@ This map has much smaller triangulation blobs than the one with additional BA.2.
 
 This is quite a common situation to find yourself in — a new variant has emerged in a new part of antigenic space, and you would like to map it. In the initial maps, where we have performed titrations against the new variant but do not have sera raised against it, the position of the new variant is often quite uncertain, and due caution is needed when interpreting the map. After sera are available to the new variant, higher resolution mapping of its position becomes possible.
 
-## Few sera
+### Smaller quantity of sera
 
 Another feature of the titer data we've been working with is that the sera are all raised in triplicate (i.e. for each variant where there is a serum, there are three). Unsurprisingly, having this extra data improves the resolution of the map.
 
@@ -250,10 +250,9 @@ Load in the map `data/02_sars_cov_2_map_no_triplicate.ace`. Run the noisy bootst
 
 ```{r, message=FALSE}
 
-
 ```
 
-# Antigen and serum bootstrap
+## Antigen and serum bootstrap
 
 Above, we have performed a version of bootstrapping which assesses the effect of variance in titration data on the map. There are other factors which affect map conformation though. One of them is the choice of antigens and sera to include and titrate in the map: because the antigenic cartography algorithm can only attempt to satisfy the distances in the map which have been measured, the choice of which to measure affects the final conformation of the map.
 
@@ -266,4 +265,4 @@ Try running a resample bootstrap on the full SARS-CoV-2 map, and comparing it to
 ```
 
 
-As you can see, the resample boostrap produces wider uncertainty blobs than the noisy boostrap for this map — because it additionally incorporates variation stemming from the fact that the different sera "see" the antigens subtley differently (and vice versa), so the choice of antigens and sera to including in the map affects their conformation.
+As you can see, the resample boostrap produces wider uncertainty blobs than the noisy boostrap for this map — because it additionally incorporates variation stemming from the fact that the different sera "see" the antigens subtly differently (and vice versa), so the choice of antigens and sera to include in the map affects its conformation.
