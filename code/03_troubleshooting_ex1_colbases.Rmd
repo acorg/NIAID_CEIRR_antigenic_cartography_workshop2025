@@ -19,7 +19,8 @@ knitr::opts_chunk$set(echo = TRUE,
 ```
 
 This markdown contains the exercise code to teach how and when the arguments
-minimum_column_basis and fixed_column_bases are useful for optimizing maps.
+minimum_column_basis and fixed_column_bases are useful for optimizing maps. Working code is 
+provided in [`03_troubleshooting_ex1_colbases_solution.Rmd`](./code/03_troubleshooting_ex1_colbases_solution.Rmd)
 For this exercise it is useful to know the following functions from Racmacs
 package: make.acmap, procrustesMap, agFill, srOutline, realignMap, colBases,
 srNames, tableDistances, titerTable. If you don't know any of the functions 

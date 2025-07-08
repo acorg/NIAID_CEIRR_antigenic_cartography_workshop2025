@@ -32,7 +32,7 @@ theme_set(theme_bw() +
 
 ## Troubleshooting example 2
 
-This example contains two maps, example map 2a and example map 2b.
+This example contains two maps, example map 2a and example map 2b. Working code is given in [`03_troubleshooting_ex4_solution.Rmd`](./code/03_troubleshooting_ex4_solution.Rmd).
 
 ### Troubleshooting example 2a
 

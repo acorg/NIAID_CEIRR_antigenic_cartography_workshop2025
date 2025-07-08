@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 ## Troubleshooting example 3
 
-This is a real-world example, previously published in [Rössler, et al. Cell Reports (2025)](https://doi.org/10.1016/j.celrep.2024.115140.) .
+This is a real-world example, previously published in [Rössler, et al. Cell Reports (2025)](https://doi.org/10.1016/j.celrep.2024.115140.). Working code is given in [`03_troubleshooting_ex5_solution.Rmd`](./code/03_troubleshooting_ex5_solution.Rmd).
 
 
 ```{r load_packages, echo=FALSE}

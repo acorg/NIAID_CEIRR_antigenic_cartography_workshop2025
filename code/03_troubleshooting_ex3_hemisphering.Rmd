@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 This markdown contains the exercise code to teach how to identify
 hemisphering problems in a map due to uncertainty of data and to analyse
-it using bootstrapping.
+it using bootstrapping. Working code is provided in [`03_troubleshooting_ex3_hemisphering_solution.Rmd`](./code/03_troubleshooting_ex3_hemisphering_solution.Rmd).
 
 For this exercise it is useful to know the following functions from
 Racmacs package: make.acmap, agFill, srOutline, view, applyPlotspec,

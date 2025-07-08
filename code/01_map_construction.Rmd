@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 This markdown contains the basic code to construct antigenic maps from titer tables. 
 
-Working code is provided for each section in the file `01_map_construction_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
+Working code is provided for each section in the file [`01_map_construction_solution.Rmd`](./code/01_map_construction_solution.Rmd). We encourage you to try and write your own code here and to perform each task before runnning the provided code.
 
 ### Load the required packages
 

@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 This session is about checking whether an antigenic map represents our titer data well, and whether our titer data is sufficient to produce a well-resolved antigenic map.
 
-Working code is provided for each section in the file `02_map_diagnostics_I_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
+Working code is provided for each section in the file [`02_map_diagnostics_I_solution.Rmd`](./code/02_map_diagnostics_I_solution.Rmd). We encourage you to try and write your own code here and to perform each task before runnning the provided code.
 
 ### Load the required packages
 

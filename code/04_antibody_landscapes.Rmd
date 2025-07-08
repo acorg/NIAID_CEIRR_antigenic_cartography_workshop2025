@@ -15,8 +15,8 @@ knitr::opts_chunk$set(echo = TRUE,
 
 # Mapping complex exposure histories with antibody landscapes
 
-This script contains tasks to construct antibody landscapes on top of antigenic maps. The solutions are 
-available in `code/04_antibody_landscapes_solution.Rmd`. 
+This script contains tasks to construct antibody landscapes on top of antigenic maps. Working code is 
+provided in [`code/04_antibody_landscapes_solution.Rmd`](./code/04_antibody_landscapes_solution.Rmd). 
 
 We will be mainly working with simulated SARS-CoV-2 data. Much of the content was previously made available here: https://doi.org/10.5281/zenodo.13471558
 

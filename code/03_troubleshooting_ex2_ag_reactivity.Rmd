@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 
 
-Working code is provided for each section in the file `03_troubleshooting_ex2_ag_reactivity_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
+Working code is provided for each section in the file [`03_troubleshooting_ex2_ag_reactivity_solution.Rmd`](./code/03_troubleshooting_ex2_ag_reactivity_solution.Rmd). We encourage you to try and write your own code here and to perform each task before runnning the provided code.
 
 ### Load the required packages
 
