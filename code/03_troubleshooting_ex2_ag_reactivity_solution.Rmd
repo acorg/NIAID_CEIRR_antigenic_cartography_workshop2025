@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.align = "center")
 ```
 
-Working code is provided for each section in the file `03_troubleshooting_ex2_ag_reactivity_solution.Rmd`. We encourage you to try and write your own code here and to perform each task before runnning the provided code.
+Working code is provided for each section in the file [`03_troubleshooting_ex2_ag_reactivity_solution.Rmd`](./code/03_troubleshooting_ex2_ag_reactivity_solution.Rmd). We encourage you to try and write your own code here and to perform each task before runnning the provided code.
 
 ### Load the required packages
 
@@ -48,14 +48,14 @@ In this exercise, we will be investigating an antigenic map which has an unusual
 
 Load in the map `data/maps/03_sars_cov_2_map_reactivity.ace` as `new_map`, and the map you produced in the first practical session, `data/maps/01_sars_cov_2_map.ace`, as `original_map`:
   
-  ```{r}
+```{r}
 new_map = read.acmap("../data/maps/03_sars_cov_2_map_reactivity.ace")
 original_map = read.acmap("../data/maps/01_sars_cov_2_map.ace")
 ```
 
 Set the serum outline using the same colors as the antigens, from `data/other/01_sars_cov_2_antigen_colors.RDS` and the `Racmacs::srOutline` function. Plot the two maps side by side. What looks unusual about the new map?
   
-  ```{r}
+```{r}
 variant_colors = readRDS("../data/other/01_sars_cov_2_antigen_colors.RDS")
 
 srOutline(new_map) = variant_colors[map_chr(str_split(srNames(new_map), fixed("_")), 1)]
@@ -95,8 +95,8 @@ plot_titers = function(titers){
     names = c("serum_variant", "serum_repeat")
   ) %>%
   mutate(
-    antigen = factor(antigen, agNames(map)),
-    serum_variant = factor(serum_variant, agNames(map)),
+    antigen = factor(antigen, agNames(new_map)),
+    serum_variant = factor(serum_variant, agNames(new_map)),
     titer_thresholded = str_detect(titer, fixed("<")),
     titer_numeric = as.numeric(str_remove(titer, fixed("<"))),
     plottiter_numeric = ifelse(
@@ -232,8 +232,6 @@ Of course, Racmacs::optimizeAgReactivity only considers stress in the map. There
 titers = adjustedTiterTable(new_map_reactivity_auto)
 
 plot_titers(titers)
-
-plot
 ```
 
 
@@ -243,7 +241,7 @@ We've just looked at an example where one antigen clearly has substantially high
 
 Recall in the "noisy" bootstrap, we set two parameters: 
   
-  1. `titer_noise_sd`, which we set to ~0.7
+1. `titer_noise_sd`, which we set to ~0.7
 2. `ag_noise_sd`, which we set to 0
 
 The `titer_noise_sd` parameter controlled how much noise is added on a per-titer basis in the bootstrap repeats.
