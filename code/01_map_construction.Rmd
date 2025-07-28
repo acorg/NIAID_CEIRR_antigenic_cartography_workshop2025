@@ -176,7 +176,7 @@ What does this do with the map stress? What does this do to the error lines?
 Then click on the "Relax map" panel on the left, which optimizes the map. What happens?
 
 ```{r}
-Racviewer(map)
+RacViewer(map)
 ```
 
 ### Point triangulation
