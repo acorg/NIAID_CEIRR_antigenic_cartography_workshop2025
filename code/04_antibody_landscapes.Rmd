@@ -3,6 +3,9 @@ title: "Antibody landscapes"
 author: "Antonia Netzl (an604@cam.ac.uk)"
 date: "2025-06-22"
 output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -15,18 +18,23 @@ knitr::opts_chunk$set(echo = TRUE,
 
 # Mapping complex exposure histories with antibody landscapes
 
-This script contains tasks to construct antibody landscapes on top of antigenic maps. Working code is 
-provided in [`code/04_antibody_landscapes_solution.Rmd`](./code/04_antibody_landscapes_solution.Rmd). 
+This script contains tasks to construct antibody landscapes on top of
+antigenic maps. Working code is provided in
+[`code/04_antibody_landscapes_solution.Rmd`](./code/04_antibody_landscapes_solution.Rmd).
 
-We will be mainly working with simulated SARS-CoV-2 data. Much of the content was previously made available here: https://doi.org/10.5281/zenodo.13471558
+We will be mainly working with simulated SARS-CoV-2 data. Much of the
+content was previously made available here:
+<https://doi.org/10.5281/zenodo.13471558>
 
-Information on the ablandscapes package can be found here: https://rdrr.io/github/acorg/ablandscapes/
+Information on the ablandscapes package can be found here:
+<https://rdrr.io/github/acorg/ablandscapes/>
 
-For plotting html objects, we will use the r3js package: https://cran.r-project.org/web/packages/r3js/index.html
+For plotting html objects, we will use the r3js package:
+<https://cran.r-project.org/web/packages/r3js/index.html>
 
 ```{r load_packages, echo = FALSE}
 # Package names
-packages <- c("Racmacs", "knitr", "tidyverse", "ablandscapes", "r3js", "chromote", "htmlwidgets")
+packages <- c("Racmacs", "knitr", "tidyverse", "ablandscapes", "r3js", "chromote", "htmlwidgets", "plyr")
 
 # Install packages not yet installed
 installed_packages <- packages %in% rownames(installed.packages())
@@ -47,10 +55,26 @@ theme_set(theme_bw() +
 single_map <- read.acmap(filename = here::here("data", "maps", "01_sars_cov_2_map.ace"))
 ```
 
+Antibody landscapes show how immunity distributes across variants in an
+antigenic map. The cross-reactivity of sera is quantified by the
+landscape's slope. The steeper the slope, the more specific a serum, and
+vice versa. The underlying geometry of the antigenic map - one antigenic
+distance unit corresponds to one two-fold change of neutralization
+titers - means that single exposure sera, from which the map was built,
+have a landscape slope around 1 on the log2 scale: With each antigenic
+distance unit away from the cone apex, the titers decrease by one
+two-fold. The slopes of multi-exposure sera are much lower than the
+slopes of single exposure sera.
 
-Antibody landscapes show how immunity distributes across variants in an antigenic map. The cross-reactivity of sera is quantified by the landscape's slope. The steeper the slope, the more specific a serum, and vice versa. The underlying geometry of the antigenic map - one antigenic distance unit corresponds to one two-fold change of neutralization titers - means that single exposure sera, from which the map was built, have a landscape slope around 1 on the log2 scale: With each antigenic distance unit away from the cone apex, the titers decrease by one two-fold. The slopes of multi-exposure sera are much lower than the slopes of single exposure sera.
-
-Multiple exposures are known to increase cross-reactivity. We here simulate the increase in cross-reactivity by reducing the titer fold changes based on values from the data by [Rössler, Netzl, et al. (2022)](https://doi.org/10.1038/s41467-022-35312-3). The slopes for multi-exposure sera in their data were between 0.4 (Pre-Omicron + BA.2 reinfection) and 0.8 (Vaccinated + Delta infection). We will simulate Delta Breakthrough infection by adjusting the Wu1 infected single exposure samples to match the 0.8 log2-scale slope, and the BA.2 reinfection by adjusting the same samples with the log2-slope of 0.4.
+Multiple exposures are known to increase cross-reactivity. We here
+simulate the increase in cross-reactivity by reducing the titer fold
+changes based on values from the data by [Rössler, Netzl, et al.
+(2022)](https://doi.org/10.1038/s41467-022-35312-3). The slopes for
+multi-exposure sera in their data were between 0.4 (Pre-Omicron + BA.2
+reinfection) and 0.8 (Vaccinated + Delta infection). We will simulate
+Delta Breakthrough infection by adjusting the Wu1 infected single
+exposure samples to match the 0.8 log2-scale slope, and the BA.2
+reinfection by adjusting the same samples with the log2-slope of 0.4.
 
 ```{r creating_multi_exposure_sera}
 single_wu1 <- logtiterTable(single_map)[,grepl("Wu1", colnames(titerTable(single_map)))]
@@ -103,9 +127,20 @@ titer_long %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-Making maps from multi-exposure sera comes with multiple difficulties. **Most importantly, the assumption that antigenic differences between variant X and Y are inferable from the immune escape of variant Y in homologous serum X, and vice versa, does not apply to multi-exposures. Multiple exposures change the antibody composition of sera, but not the antigenic properties of virus variants. Maps from multiple exposure sera, therefore, do not map the underlying antigenic relationships, but map serum properties.**
+Making maps from multi-exposure sera comes with multiple difficulties.
+**Most importantly, the assumption that antigenic differences between
+variant X and Y are inferable from the immune escape of variant Y in
+homologous serum X, and vice versa, does not apply to multi-exposures.
+Multiple exposures change the antibody composition of sera, but not the
+antigenic properties of virus variants. Maps from multiple exposure
+sera, therefore, do not map the underlying antigenic relationships, but
+map serum properties.**
 
-A map from multiple exposures shows immune escape in these specific sera, therefore, distinct exposure histories should not be combined as they likely have different immune escape patterns. To illustrate the effect of multiple exposure cross-reactivity on an antigenic map, we construct maps for each of the serum groups shown above:
+A map from multiple exposures shows immune escape in these specific
+sera, therefore, distinct exposure histories should not be combined as
+they likely have different immune escape patterns. To illustrate the
+effect of multiple exposure cross-reactivity on an antigenic map, we
+construct maps for each of the serum groups shown above:
 
 ```{r}
 # don't forget to transform the titers from log2 titer to linear titers
@@ -129,9 +164,14 @@ And plot them:
 # and compare them with the procrustesMap() function
 ```
 
-Given that map distances are based on fold changes from the maximum titer variant in a serum, making maps from cross-reactive multi-exposure sera condenses maps and overshadows antigenic differences between variants. 
+Given that map distances are based on fold changes from the maximum
+titer variant in a serum, making maps from cross-reactive multi-exposure
+sera condenses maps and overshadows antigenic differences between
+variants.
 
-**Antibody landscapes are a better way to show how serum properties change while preserving the antigenic relationships in an antigenic map**. 
+**Antibody landscapes are a better way to show how serum properties
+change while preserving the antigenic relationships in an antigenic
+map**.
 
 # Antibody landscapes
 
@@ -146,34 +186,49 @@ sample.
 The description above focusses on antibody neutralization, not binding.
 The landscape fitting approach remains the same, however.
 
-In the single cone landscape approached used for modelling SARS-CoV-2 immunity, cone coordinates (x,
-y) and cone heights (z) are fitted to titers per subject. The slope of
-this cone is optimised over all subjects per serum group, assuming the
-same decrease of neutralization across antigenic space. The cone slopes
-indicate the breadth of neutralization titers. As immune history becomes
-more complex, for example for influenza, a single cone approach does not
-provide a good approach and a loess fit should be used (discussed later).
+In the single cone landscape approached used for modelling SARS-CoV-2
+immunity, cone coordinates (x, y) and cone heights (z) are fitted to
+titers per subject. The slope of this cone is optimised over all
+subjects per serum group, assuming the same decrease of neutralization
+across antigenic space. The cone slopes indicate the breadth of
+neutralization titers. As immune history becomes more complex, for
+example for influenza, a single cone approach does not provide a good
+approach and a loess fit should be used (discussed later).
 
-The likelihood of the parameters is evaluated based on the negative log-likelihood 
-of obtaining the measured titer from a normal distribution with mean = predicted (fitted) 
-titer and a set standard deviation.
+The likelihood of the parameters is evaluated based on the negative
+log-likelihood of obtaining the measured titer from a normal
+distribution with mean = predicted (fitted) titer and a set standard
+deviation.
 
-Below, we will model the three examples from above on the full SARS-CoV-2 map.
+Below, we will model the three examples from above on the full
+SARS-CoV-2 map.
 
 ## Single cone SARS-CoV-2 Antibody landscapes
 
-We assume that the response pattern, i.e. the fold changes, is the same per serum group, which is why we fit a single slope per serum group. For single exposure serum groups that are used in the map construction, we expect the slope value 
-to be close to 1, as one unit in the map corresponds to 1 two-fold dilution of neutralization titers. The slope gives 
-the change in titers per antigenic unit. Individual sera can have higher or lower titers, so each cone height parameter and the cone coordinates are fitted independently.
+We assume that the response pattern, i.e. the fold changes, is the same
+per serum group, which is why we fit a single slope per serum group. For
+single exposure serum groups that are used in the map construction, we
+expect the slope value to be close to 1, as one unit in the map
+corresponds to 1 two-fold dilution of neutralization titers. The slope
+gives the change in titers per antigenic unit. Individual sera can have
+higher or lower titers, so each cone height parameter and the cone
+coordinates are fitted independently.
 
-Crucial for fitting antibody landscapes is that the antigen names in the titer table and in the map are the same.
-An antigen in the titer table that is not present in the map will result in an Error message, such as: `"The following antigens were not found in the map supplied:"`.
+Crucial for fitting antibody landscapes is that the antigen names in the
+titer table and in the map are the same. An antigen in the titer table
+that is not present in the map will result in an Error message, such as:
+`"The following antigens were not found in the map supplied:"`.
 
-The *transposed* raw titer table, not the logtitertable, with "<LOD" (below limit of detection) titers written as "<LOD" is given as input. Titers that are not measured should be passed as "*". The column names are the antigens, the row names are the sera to be measured. The table is passed as a matrix. The `error.sd` parameter determines the standard deviation of the normal distribution used to 
-evaluate the likelihood of measuring titer x with the current parameter set. A lower `error.sd` 
-forces the fit to match the measured data more closely, potentially resulting in overfitting. The parameter 
-should resemble the standard deviation of titer repeat measurements.
-  
+The *transposed* raw titer table, not the logtitertable, with "\<LOD"
+(below limit of detection) titers written as "\<LOD" is given as input.
+Titers that are not measured should be passed as "\*". The column names
+are the antigens, the row names are the sera to be measured. The table
+is passed as a matrix. The `error.sd` parameter determines the standard
+deviation of the normal distribution used to evaluate the likelihood of
+measuring titer x with the current parameter set. A lower `error.sd`
+forces the fit to match the measured data more closely, potentially
+resulting in overfitting. The parameter should resemble the standard
+deviation of titer repeat measurements.
 
 ```{r}
 # create a list of titer tables. You can also fit each table independently
@@ -187,9 +242,11 @@ lndscp_fits <-
   
 ```
 
-
-The `lndscp_fits` object stores information on each fit, such as the fitted slope, cone coordinates, 
-cone heights, and residuals between fitted landscape titer and measured titer. We can compare the fitted landscape slope and our multi-exposure adjustments of 0.4 and 0.8 for the BA.1 reinfected and Delta breakthrough infections serum groups:
+The `lndscp_fits` object stores information on each fit, such as the
+fitted slope, cone coordinates, cone heights, and residuals between
+fitted landscape titer and measured titer. We can compare the fitted
+landscape slope and our multi-exposure adjustments of 0.4 and 0.8 for
+the BA.1 reinfected and Delta breakthrough infections serum groups:
 
 ```{r, echo = TRUE}
 # access the slope values
@@ -198,11 +255,15 @@ slopes <-
 slopes
 ```
 
-The small variation from the expected values (1, 0.8, 0.4) can be explained by the fact that the base map contains other serum groups that determine the variants' positions and random noise in the titrations.
+The small variation from the expected values (1, 0.8, 0.4) can be
+explained by the fact that the base map contains other serum groups that
+determine the variants' positions and random noise in the titrations.
 
 ### Plotting antibody landscapes
 
-To visualise antibody landscapes, we use the [`r3js`](https://cran.r-project.org/web/packages/r3js/index.html) package. Let's begin by plotting the base map:
+To visualise antibody landscapes, we use the
+[`r3js`](https://cran.r-project.org/web/packages/r3js/index.html)
+package. Let's begin by plotting the base map:
 
 ```{r}
 z_lims <- c(0,10)
@@ -216,7 +277,6 @@ data3js <-
 
 data3js
 ```
-
 
 We can add titers to the plot like this:
 
@@ -233,7 +293,6 @@ gmt_single <- gmt_data %>%
 
 ```
 
-
 And the landscape like this:
 
 ```{r}
@@ -242,8 +301,8 @@ data3js <-
 
 ```
 
-
-We can change the landscape orientation (and select one by clicking on the "i" icon on the top right):
+We can change the landscape orientation (and select one by clicking on
+the "i" icon on the top right):
 
 ```{r}
 # orientation for landscapes
@@ -260,7 +319,10 @@ r3js::r3js(
 )
 ```
 
-We packed all of the above in functions in the `code/helpful_functions/antibody_landscapes_functions.R` script, including options to style and label the base map, and plot individual serum antibody landscapes.
+We packed all of the above in functions in the
+`code/helpful_functions/antibody_landscapes_functions.R` script,
+including options to style and label the base map, and plot individual
+serum antibody landscapes.
 
 ```{r}
 source(here::here("code", "helpful_functions", "antibody_landscapes_functions.R"))
@@ -275,8 +337,7 @@ data3js <- base_plot_data3js(map = single_map,
 set_r3js_orentation(data3js, angle)
 ```
 
-
-Plot all serum group GMT landscapes together: 
+Plot all serum group GMT landscapes together:
 
 ```{r}
 
@@ -297,10 +358,9 @@ data3js_gmts <- plot_landscapes_from_list(data3js, # base object to add landscap
 set_r3js_orentation(data3js_gmts, angle)
 ```
 
-
 We can also plot individual landscapes:
 
-Plot all serum group GMT landscapes together: 
+Plot all serum group GMT landscapes together:
 
 ```{r}
 data3js_idvl <- plot_landscapes_from_list(data3js, # base object to add landscapes to
@@ -319,8 +379,9 @@ set_r3js_orentation(data3js_idvl, angle)
 
 ### Evaluating antibody landscape fits
 
-An initial visual inspection whether the landscapes fit the measured GMT is a first indicator whether a (single cone) 
-landscape fits the data. We can also examine the values in titer plot form:
+An initial visual inspection whether the landscapes fit the measured GMT
+is a first indicator whether a (single cone) landscape fits the data. We
+can also examine the values in titer plot form:
 
 ```{r}
 # helper function
@@ -340,15 +401,17 @@ Below, we can look at how much the fitted and measured GMTs differ:
 
 ```
 
-
-To evaluate the quality of landscape fits, we can compare the measured and fitted values. The error between measured value for each sera and fitted value for the GMT landscape is stored for each fit in the `residuals` field. They are on the log2 scale:
+To evaluate the quality of landscape fits, we can compare the measured
+and fitted values. The error between measured value for each sera and
+fitted value for the GMT landscape is stored for each fit in the
+`residuals` field. They are on the log2 scale:
 
 ```{r}
 lndscp_fits$`Wu-1 infection`$residuals
 ```
 
-From them, we can calculate and compare the root mean squared error (RMSE) between individual serum titers and the fitted 
-GMT landscape:
+From them, we can calculate and compare the root mean squared error
+(RMSE) between individual serum titers and the fitted GMT landscape:
 
 ```{r}
 # helper function to get residuals
@@ -359,7 +422,8 @@ residuals <- rmse_per_variant(lndscp_fits) # helper function
 
 ```
 
-We can also evaluate how much the individual landscapes differ from their fit:
+We can also evaluate how much the individual landscapes differ from
+their fit:
 
 ```{r}
 idvl_fitted <- lapply(names(lndscp_fits), function(x){
@@ -369,7 +433,6 @@ idvl_fitted <- lapply(names(lndscp_fits), function(x){
 
 # plot individual serum fits
 ```
-
 
 ```{r}
 idvl_residuals <- lapply(names(lndscp_fits), function(x){
@@ -384,14 +447,17 @@ idvl_residuals <- lapply(names(lndscp_fits), function(x){
 
 ## Titer prediction
 
-We can also fit landscapes on top of a map that contains more antigens than were measured 
-in the landscapes sera. We can use the landscape to interpolate titers against unmeasured antigens. 
-Such cross-validation can also be used to evaluate 
-the quality of the landscape fit.
+We can also fit landscapes on top of a map that contains more antigens
+than were measured in the landscapes sera. We can use the landscape to
+interpolate titers against unmeasured antigens. Such cross-validation
+can also be used to evaluate the quality of the landscape fit.
 
-Below, we will demonstrate two approaches to interpolating titers against unmeasured antigens. The first one is including unmeasured 
-antigens as "\*" in the titer table for each serum. To demonstrate, we select random antigens and set their titers to "\*" in the titertables 
-for Wu-1 infected and Delta Breakthrough samples. We remove these antigens from the BA.1 reinfected titertables.
+Below, we will demonstrate two approaches to interpolating titers
+against unmeasured antigens. The first one is including unmeasured
+antigens as "\*" in the titer table for each serum. To demonstrate, we
+select random antigens and set their titers to "\*" in the titertables
+for Wu-1 infected and Delta Breakthrough samples. We remove these
+antigens from the BA.1 reinfected titertables.
 
 ```{r}
 # select not measured ags
@@ -412,8 +478,9 @@ lndscp_fits_sub <-
 slopes <- 
 ```
 
-The remaining antigens were enough to fit very similar slopes to the full data set. *Importantly, removing the Wu-1 
-antigen would have a stronger impact as it sets the column basis for each serum*.
+The remaining antigens were enough to fit very similar slopes to the
+full data set. *Importantly, removing the Wu-1 antigen would have a
+stronger impact as it sets the column basis for each serum*.
 
 Let's compare the fitted landscape values:
 
@@ -421,10 +488,12 @@ Let's compare the fitted landscape values:
 lapply(lndscp_fits_sub, function(x) x$fitted.values)
 ```
 
-For the Wu-1 infected and Delta Breakthrough samples, titer values were fitted also for the not measured antigens that were present in 
-the table but set to \*. When we excluded them, we do not get a fitted value. 
+For the Wu-1 infected and Delta Breakthrough samples, titer values were
+fitted also for the not measured antigens that were present in the table
+but set to \*. When we excluded them, we do not get a fitted value.
 
-We can interpolate the landscape value at any coordinate in the following way:
+We can interpolate the landscape value at any coordinate in the
+following way:
 
 ```{r}
 not_measured_coords <- agCoords(single_map)[not_measured_ags,]
@@ -433,7 +502,10 @@ not_measured_coords <- agCoords(single_map)[not_measured_ags,]
 predicted_vals <- 
 ```
 
-You see that `NA` is returned for some antigens. That is because they are outside the convex hull of the landscape. As with any model (or assay), values outside the calibrated area are less reliable. It is still possible to interpolate them: 
+You see that `NA` is returned for some antigens. That is because they
+are outside the convex hull of the landscape. As with any model (or
+assay), values outside the calibrated area are less reliable. It is
+still possible to interpolate them:
 
 $$cone\_height - ag\_dist \times cone\_slope$$
 
@@ -441,7 +513,8 @@ $$cone\_height - ag\_dist \times cone\_slope$$
 predicted_vals["JN.1"]<- 
 ```
 
-We can compare the fitted values from the complete fit with the interpolated values:
+We can compare the fitted values from the complete fit with the
+interpolated values:
 
 ```{r}
 # extract values from complete and subset fit and compare them
@@ -450,16 +523,24 @@ We can compare the fitted values from the complete fit with the interpolated val
 
 ## Influenza antibody landscapes
 
-Above, we were dealing with relatively simple scenarios of population immunity that could be modelled 
-by a single cone. Influenza exposure histories are more complex. Unknown influenza infections and vaccinations 
-over a longer time period and to more diverse strains result in immune landscapes that more closely resembles 
-multiple hills and vallyes, rather than a single hill. [Fonville et al. (2014)](https://www.science.org/doi/10.1126/science.12564277)) modelled these 
-using a loess function rather than a simple linear regression. 
+Above, we were dealing with relatively simple scenarios of population
+immunity that could be modelled by a single cone. Influenza exposure
+histories are more complex. Unknown influenza infections and
+vaccinations over a longer time period and to more diverse strains
+result in immune landscapes that more closely resembles multiple hills
+and vallyes, rather than a single hill. [Fonville et al.
+(2014)](https://www.science.org/doi/10.1126/science.12564277)) modelled
+these using a loess function rather than a simple linear regression.
 
-Loess is short for locally estimated scatterplot smoothing. The dataset is subset into parts and a local regression is 
-fit to these smaller parts. The window of subset data moves across the dataset. In a weighted local regression (LOWESS), more weight is assigned to points closer to the center of the current window. The bandwidth (span) parameter determines 
-the fraction of data used per window (higher span = larger fraction of data per window, larger smoothing). The local 
-regressions can be polynomial functions of higher orders, the degree parameter specifies the degree of the polynomial.
+Loess is short for locally estimated scatterplot smoothing. The dataset
+is subset into parts and a local regression is fit to these smaller
+parts. The window of subset data moves across the dataset. In a weighted
+local regression (LOWESS), more weight is assigned to points closer to
+the center of the current window. The bandwidth (span) parameter
+determines the fraction of data used per window (higher span = larger
+fraction of data per window, larger smoothing). The local regressions
+can be polynomial functions of higher orders, the degree parameter
+specifies the degree of the polynomial.
 
 ```{r, warning = FALSE}
 #--------------------------------- Flu data from the ablandscapes package----------------------
@@ -494,16 +575,20 @@ lndscp_cols["flu", "Color"] <- "#F87"
 plot(h3_map)
 ```
 
-
 ```{r}
 # calculate flu GMTs for vaccine1997.titers.post
 flu_gmts <- 
 ```
-Above is the influenza A/H3N2 base map, coloured by antigenic cluster. We will put the flu landscape on top with the 
-same parameters as used in the publication (bandwith = 11, degree = 1) (SOM of [Fonville et al. (2014)](https://www.science.org/doi/10.1126/science.12564277)). You can look at the effect of changing both parameters in the example below by changing the bandwidth or degree.
 
-The flu landscape fit and plot takes a bit 
-longer to generate than the simple SARS-CoV-2 cone fit.
+Above is the influenza A/H3N2 base map, coloured by antigenic cluster.
+We will put the flu landscape on top with the same parameters as used in
+the publication (bandwith = 11, degree = 1) (SOM of [Fonville et al.
+(2014)](https://www.science.org/doi/10.1126/science.12564277)). You can
+look at the effect of changing both parameters in the example below by
+changing the bandwidth or degree.
+
+The flu landscape fit and plot takes a bit longer to generate than the
+simple SARS-CoV-2 cone fit.
 
 ```{r}
 # fit the flu landscape with the "loess" method and bandwidth = 11
@@ -535,7 +620,6 @@ flu_base <- lndscp3d_map(
 
 ```
 
-
 ```{r, warning=FALSE}
 # plot the flu landscape
 flu_html <- plot_landscapes_from_list(flu_base, 
@@ -552,9 +636,11 @@ flu_html
 
 # Screenshotting Antibody Landscapes
 
-To screenshot html objects we will use the [`htmlwidgets`](10.32614/CRAN.package.htmlwidgets) and [`chromote` package](https://rstudio.github.io/chromote/) so you need to have 
-[Google Chrome](https://www.google.com/chrome/) installed on your computer. We will take the SARS-CoV-2 
-landscapes as example.
+To screenshot html objects we will use the
+[`htmlwidgets`](10.32614/CRAN.package.htmlwidgets) and [`chromote`
+package](https://rstudio.github.io/chromote/) so you need to have
+[Google Chrome](https://www.google.com/chrome/) installed on your
+computer. We will take the SARS-CoV-2 landscapes as example.
 
 ```{r}
 target_scp <- set_r3js_orentation(data3js_gmts, angle)
@@ -601,7 +687,3 @@ file.remove(fig_path)
 # remove landscape files
 unlink(gsub(".html", "_files", fig_path), recursive = TRUE)
 ```
-
-
-
-

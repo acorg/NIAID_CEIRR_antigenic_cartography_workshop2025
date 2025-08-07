@@ -10,7 +10,8 @@ packages <- c(
   "seqinr",
   "r3js",
   "chromote",
-  "htmlwidgets"
+  "htmlwidgets",
+  "plyr"
 )
 
 # Install packages not yet installed
